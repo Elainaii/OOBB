@@ -1,3 +1,4 @@
+from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QApplication,QWidget,QVBoxLayout,QPushButton
 from ui_calc import Ui_Form
 
@@ -24,33 +25,31 @@ class MyWindow(QWidget,Ui_Form):
         self.pushButtonMul.clicked.connect(lambda :self.addOp('*'))
         self.pushButtonDiv.clicked.connect(lambda :self.addOp('/'))
 
-        self.comboBox.addItems(['Science','Program','Math'])
-        self.comboBox.currentIndexChanged.connect(self.showi)
 
-        self.checkBox.clicked.connect(lambda :print(self.checkBox.isChecked()))
 
     def addOp(self,op):
-        self.lineEdit.clear()
         self.op = self.op + op
-        self.lineEdit.setText(self.op)
+        cursor = self.textEdit.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        self.textEdit.insertPlainText(op)
 
     def calc(self):
         num = 0
         try:
             num = eval(self.op)
         except:
-            self.textEdit.setMarkdown(' **Invalid Syntax: {}** '.format(self.op))
+            self.textEdit.append(f'Invalid expression "{self.op}"\n')
             self.op = ''
-            self.lineEdit.setText(str(num))
+            #self.lineEdit.setText(str(num))
             return
 
 
-        self.lineEdit.setText(str(num))
+        self.textEdit.append(str(num))
         self.op = str(num)
 
     def ce(self):
         self.op = ''
-        self.lineEdit.clear()
+        self.textEdit.append("")
 
     def showi(self,index):
         print(index)
