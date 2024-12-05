@@ -30,7 +30,7 @@ def add_homework(tid, cid):
 def get_homeworks(tid, cid):
     pass
 
-#批改作业，需要提交学生id，作业id，分数
+#批改作业，需要提交学生id，作业id，分数,应该是一个列表，包含多个学生的作业分数
 @teacher_bp.route('/teacher/<int:tid>/courses/<int:cid>/homeworks/grade', methods=['POST'])
 def set_grade_homework(tid, cid):
     pass

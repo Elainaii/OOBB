@@ -6,12 +6,14 @@ create table department (
 create table student (
     sid int primary key,
     student_name varchar(50) not null,
+    mid int not null,
     did int not null ,
     sex char(1) not null,check ( sex in ('M','F')),
     birthday date not null,
     ID_number char(18) not null,
     Email varchar(50) not null,
-    foreign key (did) references department(did)
+    foreign key (did) references department(did),
+    foreign key (mid) references major(mid)
 );
 
 create table course (
@@ -112,6 +114,11 @@ create table course_section (
     sec_id int not null,
     foreign key (cid) references course(cid),
     foreign key (sec_id) references section(sec_id)
+);
+
+create table major(
+    mid int primary key,
+    major_name varchar(50) not null
 );
 
 create table classroom_section (

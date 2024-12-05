@@ -38,3 +38,16 @@ def change_student():
 def change_teacher():
     pass
 
+#添加classroom
+@admin_bp.route('/admin/classroom/add', methods=['GET'])
+def add_classroom():
+    pass
+
+#添加院系
+@admin_bp.route('/admin/department/add', methods=['GET'])
+def add_department():
+    pass
+
+
+
+
