@@ -3,6 +3,19 @@ import src.server.services as services
 from src.server.exceptions import *
 from src.server.routes.route_utils import *
 
+
+'''
+学生模块：
+1. 奖惩：获取学生奖惩信息
+2. 查看课程表：获取学生已选择的课程信息,包括课程名，教师名，学分，学时，上课时间，上课地点
+3. 成绩单：获取学生课程的成绩，包括课程名，学分，成绩
+4. 作业1：获取学生所有课程的作业，包括课程名，作业内容，截止时间
+5. 作业2：提交作业，需要提交作业的课程id，作业id，作业内容
+6. 选课1：获取可以选择的课程列表，包括课程id，院系，课程名，教师名，学分，学时，上课时间，上课地点
+7. 选课2：学生选课，需要提交课程id
+'''
+
+
 student_bp = Blueprint('student', __name__)
 
 #获取学生奖惩信息

@@ -3,6 +3,14 @@ import src.server.services as services
 from src.server.exceptions import *
 from src.server.routes.route_utils import *
 
+
+'''
+公共模块：
+1. 登录：需要提交用户id和密码
+2. 修改密码：需要提交用户id，旧密码，新密码
+
+TODO：把登录/修改密码都放到个人信息模块中，并且新增功能：查看个人信息、修改个人信息
+'''
 public_bp = Blueprint('public',__name__)
 
 @public_bp.route('/login', methods=['POST'])
