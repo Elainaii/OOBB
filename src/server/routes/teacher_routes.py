@@ -3,6 +3,17 @@ import src.server.services as services
 from src.server.exceptions import *
 from src.server.routes.route_utils import *
 
+
+'''
+教师模块：
+1. 查看所教课程列表：返回课程id，课程名，学分，学时，上课时间，上课地点
+2. 添加一门课程
+3. 查看课程的学生列表：返回学生的id，姓名，成绩,(作业完成情况(学生的每次作业分数总和+分数上限))
+4. 添加作业
+5. 查看学生作业提交情况：返回学生id，姓名，作业id，作业内容，提交时间，可以在前端进行批改
+6. 批改作业：需要提交学生id，作业id，分数
+7. 设置学生成绩：需要提交学生id，课程id，分数
+'''
 teacher_bp = Blueprint('teacher',__name__)
 
 #获取教师所教课程列表，返回课程id，课程名，学分，学时，上课时间，上课地点
