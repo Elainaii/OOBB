@@ -26,3 +26,8 @@ def login():
 @public_bp.route('/account/change_password', methods=['POST'])
 def change_password():
     pass # TODO
+
+@public_bp.route('/department', methods=['GET'])
+def get_department():
+    data = services.get_dept()
+    return create_response(data, message='success', code=0)

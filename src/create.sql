@@ -141,3 +141,15 @@ create table account(
     identity char(1) not null,check ( identity in ('S','T','A'))
 
 )
+
+create table manager(
+    manager_id int primary key,
+    manager_name varchar(50) not null,
+    Email varchar(50) not null
+)
+
+show create table manager
+
+drop table manager
+
+SHOW CREATE TABLE account;

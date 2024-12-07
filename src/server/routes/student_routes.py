@@ -58,5 +58,6 @@ def select_course(sid):
 #获取学生的个人信息，包括学号，姓名，性别，年龄，院系，专业，班级
 @student_bp.route('/student/<int:sid>/info', methods=['GET'])
 def get_student_info(sid):
-    pass
+    data = services.get_student_info(sid)
+    return create_response(data, message='success', code=0)
 
