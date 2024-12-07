@@ -32,7 +32,7 @@ def get_my_course_info(sid):
 
 #获取学生课程的成绩，包括课程名，学分，成绩
 @student_bp.route('/student/<int:sid>/courses/select', methods=['POST'])
-def select_course(sid):
+def selected_course(sid):
     pass # TODO
 
 #获取学生所有课程的作业，包括课程名，作业内容，截止时间

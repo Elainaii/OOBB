@@ -20,8 +20,15 @@ admin_bp = Blueprint('admin',__name__)
 
 @admin_bp.route('/admin/students', methods=['GET'])
 def fetch_students():
-    data = services.get_students()
-    return create_response(data, message='success', code=0)
+    page_number = request.args.get('page')
+    page_size = request.args.get('size')
+    if not page_number or not page_size:
+        return create_response({}, message='page and size are required,such as /admin/students?size=20&page=0', code=-1)
+    page_number = int(page_number)
+    page_size = int(page_size)
+    data = services.get_students(page_number, page_size)
+    num = services.get_student_num()
+    return {'code': 0, 'message': 'success','page':page_number,'size':page_size , 'total_num': num ,'data': data}
 
 
 #添加学生

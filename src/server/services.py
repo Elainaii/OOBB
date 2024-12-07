@@ -11,11 +11,18 @@ def get_user(id: int):
     cursor.close()
     return courses
 
-
-def get_students():
+def get_student_num():
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM student")
+    cursor.execute("SELECT count(*) as num FROM student")
+    num = cursor.fetchone()
+    cursor.close()
+    return num['num']
+
+def get_students(page: int, size: int):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(f"SELECT * FROM student limit {size} offset {page*size}")
     courses = cursor.fetchall()
     cursor.close()
     return courses
