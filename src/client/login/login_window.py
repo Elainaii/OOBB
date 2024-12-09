@@ -3,7 +3,8 @@ import sys
 from PySide6.QtCore import Qt, QTranslator, QLocale, QRect
 from PySide6.QtGui import QIcon, QPixmap, QColor
 from PySide6.QtWidgets import QApplication
-from qfluentwidgets import setThemeColor, FluentTranslator, setTheme, Theme, SplitTitleBar, isDarkTheme
+from qfluentwidgets import setThemeColor, FluentTranslator, setTheme, Theme, SplitTitleBar, isDarkTheme, \
+    InfoBarPosition, InfoBar
 from src.client.login.ui_LoginWindow import Ui_Form
 
 from src.client.core.account import *
@@ -78,7 +79,39 @@ class LoginWindow(Window, Ui_Form):
     def login(self):#处理登录
         account = self.lineEditUsername.text()
         password = self.lineEditPassword.text()
-        self.account.login(account,password)
+        if account == "" or password == "":
+            InfoBar.error(
+                title='错误',
+                content="用户名或密码不能为空",
+                orient=Qt.Vertical,  # 内容太长时可使用垂直布局
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+            return
+        status,msg = self.account.login(account,password)
+        if status:
+            #self.close()
+            InfoBar.success(
+                title='登录成功',
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self
+            )
+        else:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,  # 内容太长时可使用垂直布局
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
 
 
 

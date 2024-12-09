@@ -9,14 +9,17 @@ class Account:
         self.identity = ""
 
     def login(self, user_id, password):
-        r = requests.post(Config.API_BASE_URL + "/login", json={"id": user_id, "password": password})
-        if r.status_code != 200:
-            print("Login failed.Cannot connect to server.")
-            return False
+        try:
+            r = requests.post(Config.API_BASE_URL + "/login", json={"id": user_id, "password": password}, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"Login failed. An error occurred: {e}"
+
         if r.json()['code'] == 0:
-            self.id = id
+            self.id = user_id
             self.identity = r.json()['identity']
-            print("Login success.")
-            return True
+            return True,"Login success."
         else:
-            print(r.json()['message'])
+            return False,r.json()['message']
