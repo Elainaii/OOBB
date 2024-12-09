@@ -25,4 +25,11 @@ def login():
 #修改密码，需要提交用户id，旧密码，新密码
 @public_bp.route('/account/change_password', methods=['POST'])
 def change_password():
-    pass # TODO
+    userid = request.json.get('id')
+    old_password = request.json.get('old_password')
+    new_password = request.json.get('new_password')
+    user = services.get_user(userid)
+    if user and user['password'] == old_password:
+        services.change_password(userid, new_password)
+        return jsonify({'code': 0, 'message': 'success'})
+    return jsonify({'code': -1, 'message': 'Invalid username or password.'})

@@ -22,7 +22,7 @@ def get_student_num():
 def get_students(page: int, size: int):
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute(f"SELECT * FROM student limit {size} offset {page*size}")
+    cursor.execute(f"SELECT * FROM student natural join department limit {size} offset {page*size}")
     courses = cursor.fetchall()
     cursor.close()
     return courses
@@ -57,3 +57,11 @@ def get_dept():
     cursor.close()
     return courses
 
+
+def change_password(userid, new_password):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(f"UPDATE account SET password = '{new_password}' WHERE id = {userid}")
+    db.commit()
+    cursor.close()
+    return
