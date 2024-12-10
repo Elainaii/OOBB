@@ -324,7 +324,7 @@ for i in range(100):
 
 
 '''
-
+'''
 cursor.execute("SELECT cid FROM course")
 courses = cursor.fetchall()
 
@@ -343,5 +343,19 @@ for course in courses:
                 cursor.execute(sql, (cid, pre_course))
         # 把这门课程加入到基础课程中
         basic_courses.append(cid)
+'''
 
-db.commit()
+# 加入学期，从2000年开始，每年有4个学期（春夏秋冬）
+
+'''
+season = ['春', '夏', '秋', '冬']
+k = 1
+for i in range(2000, 2025):
+    for j in range(1, 5):
+        sql = "INSERT INTO semester (semester_id, year, season) VALUES (%s, %s, %s)"
+        cursor.execute(sql, (k, i, season[j - 1]))
+        k += 1
+
+
+'''
+

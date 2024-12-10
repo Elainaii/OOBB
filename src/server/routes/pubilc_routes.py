@@ -27,7 +27,8 @@ def login():
 def change_password():
     pass # TODO
 
-@public_bp.route('/department', methods=['GET'])
+# 获取院系信息
+@public_bp.route('/departments', methods=['GET'])
 def get_department():
     data = services.get_dept()
     return create_response(data, message='success', code=0)

@@ -19,16 +19,19 @@ teacher_bp = Blueprint('teacher',__name__)
 #获取教师所教课程列表，返回课程id，课程名，学分，学时，上课时间，上课地点
 @teacher_bp.route('/teacher/<int:tid>/courses', methods=['GET'])
 def get_courses(tid):
-    pass
+    data = services.get_courses(tid)
+    return create_response(data, message='success', code=0)
 
 #添加一门课程
 @teacher_bp.route('/teacher/<int:tid>/courses/add', methods=['POST'])
 def add_course(tid):
     pass
 
-#获取某个课程的学生列表，返回学生的id，姓名，成绩,(作业完成情况(学生的每次作业分数总和+分数上限))
+#获取某个课程的学生列表，返回学生的id，姓名
 @teacher_bp.route('/teacher/<int:tid>/courses/<int:cid>/students', methods=['GET'])
 def get_course_students(tid, cid):
+    data = services.get_course_students(tid, cid)
+    return create_response(data, message='success', code=0)
     pass
 
 #添加作业
@@ -39,7 +42,8 @@ def add_homework(tid, cid):
 #查看学生作业提交情况，返回学生id，姓名，作业id，作业内容，提交时间，可以在前端进行批改
 @teacher_bp.route('/teacher/<int:tid>/courses/<int:cid>/homeworks', methods=['GET'])
 def get_homeworks(tid, cid):
-    pass
+    data = services.get_homeworks(tid, cid)
+    return create_response(data, message='success', code=0)
 
 #批改作业，需要提交学生id，作业id，分数,应该是一个列表，包含多个学生的作业分数
 @teacher_bp.route('/teacher/<int:tid>/courses/<int:cid>/homeworks/grade', methods=['POST'])

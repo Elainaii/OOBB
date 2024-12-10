@@ -68,9 +68,16 @@ def add_teacher():
 #修改学生信息，需要提交学生id，修改后的信息，不修改的设为空
 @admin_bp.route('/admin/student/change', methods=['POST'])
 def change_student():
+    data = request.json
+    try:
+        services.change_student(data)
+    except myException as e:
+        return create_response({}, message=str(e), code=-1)
+    except Exception as e:
+        return create_response({}, message=str(e), code=-1)
     pass
 
-#修改教师信息，需要提交教师id，修改后的信息，不修改的设为空
+#修改教师信息，需要提交教师id，修改后的信息，不修改保持原状
 @admin_bp.route('/admin/teacher/change', methods=['POST'])
 def change_teacher():
     pass
