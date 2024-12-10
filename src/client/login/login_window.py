@@ -109,15 +109,9 @@ class LoginWindow(Window, Ui_Form):
                 orient=Qt.Vertical,  # 内容太长时可使用垂直布局
                 isClosable=True,
                 position=InfoBarPosition.TOP,
-                duration=3000,
+                duration=2000,
                 parent=self
             )
-
-
-
-
-
-
 
 
 
