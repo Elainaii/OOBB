@@ -33,3 +33,9 @@ def change_password():
         services.change_password(userid, new_password)
         return jsonify({'code': 0, 'message': 'success'})
     return jsonify({'code': -1, 'message': 'Invalid username or password.'})
+
+# 获取院系信息
+@public_bp.route('/departments', methods=['GET'])
+def get_department():
+    data = services.get_dept()
+    return create_response(data, message='success', code=0)

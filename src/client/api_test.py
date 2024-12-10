@@ -1,6 +1,6 @@
 import requests
 
 
-r = requests.post("http://127.0.0.1:5000/student/add",json={"id":10001,"password":"123456"})
+r = requests.post("http://127.0.0.1:5000//login",json={"id":20240001,"password":"666666"})
 
 print(r.text)
