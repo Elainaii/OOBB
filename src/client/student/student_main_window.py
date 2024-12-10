@@ -6,6 +6,7 @@ from qfluentwidgets import ScrollArea, MSFluentWindow, FluentIcon, NavigationIte
     SearchLineEdit, TableView, CaptionLabel, LineEdit, TransparentDropDownPushButton, setFont, RoundMenu, \
     TogglePushButton, CheckableMenu, MenuIndicatorType
 
+from src.client.core.account import Account
 
 class MyCourseInterface(ScrollArea):
 
@@ -129,7 +130,7 @@ class MyCourseInterface(ScrollArea):
 
 
 class StudentMainWindow(MSFluentWindow):
-    def __init__(self, parent=None):
+    def __init__(self,account:Account = None, parent=None):
         super().__init__(parent)
 
         self.myCourseInterface = MyCourseInterface(self)

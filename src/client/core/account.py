@@ -3,6 +3,9 @@ from src.client.core.config import *
 class Account:
     id = int()
     identity = str()
+    dept_list = list()
+    curr_semester = str()
+
 
     def __init__(self):
         self.id = 0
@@ -23,3 +26,6 @@ class Account:
             return True,"Login success."
         else:
             return False,r.json()['message']
+
+    def get_dept_list(self):
+        pass

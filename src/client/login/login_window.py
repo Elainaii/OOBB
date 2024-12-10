@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QApplication
 from qfluentwidgets import setThemeColor, FluentTranslator, setTheme, Theme, SplitTitleBar, isDarkTheme, \
     InfoBarPosition, InfoBar
 from src.client.login.ui_LoginWindow import Ui_Form
+from src.client.student.student_main_window import *
 
 from src.client.core.account import *
 
@@ -20,10 +21,22 @@ else:
     from qframelesswindow import FramelessWindow as Window
 
 
+def show_main_window(account: Account, mainWindow=None):
+    if account.identity == 'A':
+        print("Admin")  # 这里之后改成展示界面
+    elif account.identity == 'T':
+        print("Teacher")
+    else:
+        mainWindow = StudentMainWindow(account)
+        mainWindow.show()
+        print("Student")
+
+
 class LoginWindow(Window, Ui_Form):
     account: Account
-    def __init__(self):
+    def __init__(self,account_:Account,mainWindow):
         super().__init__()
+        self.mainWindow = mainWindow
         self.setupUi(self)
         # setTheme(Theme.DARK)
         setThemeColor('#28afe9')
@@ -60,7 +73,7 @@ class LoginWindow(Window, Ui_Form):
         w, h = desktop.width(), desktop.height()
         self.move(w//2 - self.width()//2, h//2 - self.height()//2)
 
-        self.account = Account()
+        self.account = account_
         self.bind()
 
     def resizeEvent(self, e):
@@ -72,8 +85,6 @@ class LoginWindow(Window, Ui_Form):
     def bind(self):#绑定事件
         self.pushButtonLogin.clicked.connect(self.login)
 
-    def bind_account(self,account_:Account):
-        self.account = account_
 
 
     def login(self):#处理登录
@@ -92,16 +103,8 @@ class LoginWindow(Window, Ui_Form):
             return
         status,msg = self.account.login(account,password)
         if status:
-            #self.close()
-            InfoBar.success(
-                title='登录成功',
-                content="",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=2000,
-                parent=self
-            )
+            show_main_window(self.account,self.mainWindow)
+            self.close()
         else:
             InfoBar.error(
                 title='错误',
