@@ -36,7 +36,6 @@ def get_my_course_info(sid):
 def selected_course(sid):
     data = services.get_selected_course(sid)
     return create_response(data, message='success', code=0)
-    pass # TODO
 
 #获取学生所有课程的作业，包括课程名，作业内容，截止时间
 @student_bp.route('/student/<int:sid>/courses/homework', methods=['GET'])
@@ -67,7 +66,7 @@ def get_course_info(sid):
 def select_course(sid):
     pass
 
-#获取学生的个人信息，包括学号，姓名，性别，年龄，院系，专业，班级
+#获取学生的个人信息，包括学号，姓名，性别，年龄，院系，专业
 @student_bp.route('/student/<int:sid>/info', methods=['GET'])
 def get_student_info(sid):
     data = services.get_student_info(sid)

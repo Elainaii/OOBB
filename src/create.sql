@@ -182,5 +182,7 @@ create table timeslot_classroom_section(
     foreign key (classroom_id) references classroom(classroom_id)
 );
 
-# 为homework_collection表加一个对homeowrk的外键 homework_name外码约束
-alter table homework_collection add foreign key (homework_name) references homework(homework_name);
+
+
+# 往section中加入rest_number字段，表示剩余可选人数
+alter table section add rest_number int not null;
