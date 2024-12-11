@@ -29,4 +29,16 @@ class Account:
             return False,r.json()['message']
 
     def get_dept_list(self):
-        pass
+        try:
+            r = requests.get(Config.API_BASE_URL + "/departments", timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            self.dept_list = r.json()['data']
+            return True,"Get dept list success."
+        else:
+            return False,r.json()['message']

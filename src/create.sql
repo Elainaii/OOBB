@@ -74,6 +74,7 @@ create table section (
     start_week int not null,
     end_week int not null,
     max_students int not null,
+    rest_number int not null,
     foreign key (cid) references course(cid),
     foreign key (semester_id) references semester(semester_id)
 );
@@ -138,3 +139,4 @@ create table timeslot_classroom_section(
     foreign key (timeslot_id) references timeslot(timeslot_id),
     foreign key (classroom_id) references classroom(classroom_id)
 );
+
