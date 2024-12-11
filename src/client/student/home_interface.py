@@ -1,3 +1,5 @@
+import os
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QImage, QPainter, QPainterPath, QPixmap
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QGraphicsDropShadowEffect
@@ -40,8 +42,8 @@ class BannerWidget(QWidget):
 
         # 将阴影效果应用于小部件
         self.galleryLabel.setGraphicsEffect(shadow)
-
-        self.img = Image.open("../resource/images/Elaina.png")
+        script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.img = Image.open(script_dir+'/resource/images/Elaina.png')
         self.banner = None
         self.path = None
 
