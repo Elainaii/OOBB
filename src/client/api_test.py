@@ -39,4 +39,16 @@ r = requests.post("http://127.0.0.1:5000/admin/admin/add", json = {
 })
 '''
 
+'''
+r = requests.post("http://127.0.0.1:5000/student/201011919/courses/select", json = {
+    'sec_id': '2'
+})
+'''
+
+r = requests.post("http://127.0.0.1:5000/student/201011919/courses/homework/submit", json = {
+    'sec_id': '1',
+    'homework_name': '魂学导论第一次作业',
+    'homework_content': '宫崎英高小时候去上学迷路了不小心被路边的野狗追却不能打开地图'
+}
+)
 print(r.text)

@@ -46,7 +46,9 @@ def get_homework(sid):
 #提交作业，需要提交作业的课程id，作业id，作业内容
 @student_bp.route('/student/<int:sid>/courses/homework/submit', methods=['POST'])
 def submit_homework(sid):
-    pass # TODO
+    data = request.json
+    services.submit_homework(sid, data)
+    return jsonify({'code': 0, 'message': 'success'})
 
 #获取可以选择的课程列表，包括课程id，院系，课程名，教师名，学分，学时，上课时间，上课地点
 @student_bp.route('/student/<int:sid>/courses/info', methods=['GET'])
@@ -64,7 +66,9 @@ def get_course_info(sid):
 #学生选课，需要提交课程id
 @student_bp.route('/student/<int:sid>/courses/select', methods=['POST'])
 def select_course(sid):
-    pass
+    data = request.json
+    services.select_course(sid, data['sec_id'])
+    return jsonify({'code': 0, 'message': 'success'})
 
 #获取学生的个人信息，包括学号，姓名，性别，年龄，院系，专业
 @student_bp.route('/student/<int:sid>/info', methods=['GET'])
