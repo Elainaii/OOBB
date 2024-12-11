@@ -4,6 +4,7 @@ class Account:
     id = int()
     identity = str()
     dept_list = list()
+    semester_list = list()
     curr_semester = str()
 
 

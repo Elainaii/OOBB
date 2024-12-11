@@ -3,6 +3,17 @@ create table department (
     dept_name varchar(50) not null
 );
 
+create table major(
+    mid int primary key,
+    major_name varchar(50) not null
+);
+
+create table semester(
+    semester_id int primary key,
+    year int not null,
+    season char(1) not null,check ( season in ('春','夏','秋','冬'))
+);
+
 create table student (
     sid int primary key,
     student_name varchar(50) not null,
@@ -59,12 +70,12 @@ create table award (
 create table section (
     sec_id int primary key,
     cid int not null,
-    semester varchar(10) not null,
-    year int not null,
+    semester_id int not null,
     start_week int not null,
     end_week int not null,
     max_students int not null,
-    foreign key (cid) references course(cid)
+    foreign key (cid) references course(cid),
+    foreign key (semester_id) references semester(semester_id)
 );
 
 create table homework (
@@ -84,6 +95,7 @@ create table homework_collection (
     score numeric(4,1),
     foreign key (sid) references student(sid),
     foreign key (sec_id) references section(sec_id)
+
 );
 
 create table pre_course (
@@ -108,70 +120,15 @@ create table teacher_section (
     foreign key (sec_id) references section(sec_id)
 );
 
-create table course_section (
-    cid int not null,
-    sec_id int not null,
-    foreign key (cid) references course(cid),
-    foreign key (sec_id) references section(sec_id)
-);
-
-create table major(
-    mid int primary key,
-    major_name varchar(50) not null
-);
-
-create table classroom_section (
-    sec_id int not null,
-    classroom_id int not null,
-    foreign key (sec_id) references section(sec_id),
-    foreign key (classroom_id) references classroom(classroom_id)
-);
-
-create table timeslot_section (
-    sec_id int not null,
-    timeslot_id int not null,
-    foreign key (sec_id) references section(sec_id),
-    foreign key (timeslot_id) references timeslot(timeslot_id)
-);
 
 create table account(
     id int primary key,
     password varchar(50) not null,
     identity char(1) not null,check ( identity in ('S','T','A'))
 
-)
-
-create table manager(
-    manager_id int primary key,
-    manager_name varchar(50) not null,
-    Email varchar(50) not null
-)
-
-show create table manager;
-
-drop table manager;
-
-SHOW CREATE TABLE account;
-
-
-
-drop table course_section;
-
-create table semester(
-    semester_id int primary key,
-    year int not null,
-    season char(1) not null,check ( season in ('春','夏','秋','冬'))
 );
 
-# 把semester_id加到section表中，删掉semester和year字段
-alter table section add semester_id int not null;
-alter table section drop column semester;
-alter table section drop column year;
-alter table section add foreign key (semester_id) references semester(semester_id);
 
-
-drop table classroom_section;
-drop table timeslot_section;
 
 create table timeslot_classroom_section(
     sec_id int not null,
@@ -181,6 +138,3 @@ create table timeslot_classroom_section(
     foreign key (timeslot_id) references timeslot(timeslot_id),
     foreign key (classroom_id) references classroom(classroom_id)
 );
-
-# 为homework_collection表加一个对homeowrk的外键 homework_name外码约束
-alter table homework_collection add foreign key (homework_name) references homework(homework_name);

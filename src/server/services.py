@@ -134,7 +134,9 @@ def get_my_course_info(sid):
         "timeslot.day as course_day, timeslot.start_time as course_start_time, timeslot.end_time as course_end_time, "
         "classroom.building_name as building_name, classroom.room_number as room_number, "
         "section.start_week as start_week, section.end_week as end_week, teacher.teacher_name as teacher_name "
-        "FROM section, classroom, timeslot, student, course, timeslot_classroom_section, student_section, teacher, teacher_section "
+        "FROM section natural join course natural join teacher natural join "
+        '''
+        "FROM , classroom, timeslot, student, course, timeslot_classroom_section, student_section, , teacher_section "
         "WHERE student.sid = %s "
         "AND student_section.sid = student.sid "
         "AND student_section.sec_id = section.sec_id "
@@ -144,6 +146,7 @@ def get_my_course_info(sid):
         "AND timeslot_classroom_section.timeslot_id = timeslot.timeslot_id "
         "AND teacher.tid = teacher_section.tid "
         "AND teacher_section.sec_id = section.sec_id "
+        '''
     )
     cursor.execute(sql, (sid, ))
     courses = cursor.fetchall()
