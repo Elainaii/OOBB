@@ -41,7 +41,7 @@ class BannerWidget(QWidget):
         # 将阴影效果应用于小部件
         self.galleryLabel.setGraphicsEffect(shadow)
 
-        self.img = Image.open("C:/Users/Elaina/Pictures/1700456291734.png")
+        self.img = Image.open("../resource/images/Elaina.png")
         self.banner = None
         self.path = None
 

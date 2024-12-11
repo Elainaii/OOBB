@@ -11,6 +11,7 @@ from src.client.core.account import Account
 class MyCourseController():
     def __init__(self,account:Account):
         data = account.get_my_course()
+        #TODO
 
 
 class MyCourseTableView(TableView):
