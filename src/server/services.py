@@ -1,6 +1,7 @@
 #负责对数据库进行操作
 from db import *
 from exceptions import *
+from datetime import datetime
 
 #获取用户信息,用于登录
 def get_user(id: int):
@@ -24,7 +25,7 @@ def get_student_num():
 def get_students(page: int, size: int):
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute(f"SELECT * FROM student natural join department limit {size} offset {page*size}")
+    cursor.execute(f"SELECT * FROM student limit {size} offset {page*size}")
     courses = cursor.fetchall()
     cursor.close()
     return courses
@@ -42,6 +43,24 @@ def get_teachers(page: int, size: int):
     db = get_db()
     cursor = db.cursor(dictionary=True)
     cursor.execute(f"SELECT * FROM teacher limit {size} offset {page*size}")
+    courses = cursor.fetchall()
+    cursor.close()
+    return courses
+
+# 获取管理员数量
+def get_admin_num():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT count(*) as num FROM manager")
+    num = cursor.fetchone()
+    cursor.close()
+    return num['num']
+
+# 获取管理员列表
+def get_admins(page: int, size: int):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(f"SELECT * FROM manager limit {size} offset {page*size}")
     courses = cursor.fetchall()
     cursor.close()
     return courses
@@ -64,12 +83,27 @@ def get_award(sid):
 def add_student(data: dict):
     db = get_db()
     cursor = db.cursor()
-    cursor.execute(f"SELECT did FROM department WHERE did = {data['department']}")
+
+    # 检查当前学号是否被占用
+    cursor.execute(f"SELECT sid FROM student WHERE sid = {data['sid']}")
+    sid = cursor.fetchone()
+    if sid:
+        raise myException('Student id already exists.')
+    # 检查院系是否存在
+    cursor.execute(f"SELECT did FROM department WHERE did = {data['did']}")
     did = cursor.fetchone()
     if not did:
         raise myException('Invalid department id.')
-    cursor.execute(f"INSERT INTO student VALUES ({data['sid']},'{data['name']}',{did},'{data['sex']}','{data['birthday']}','{data['id_number']}','{data['email']}')")
-    cursor.execute(f"INSERT INTO account VALUES ({data['sid']},'{data['id_number']}','S')")#默认密码为666666
+    # 检查专业是否存在
+    cursor.execute(f"SELECT mid FROM major WHERE mid = {data['mid']}")
+    mid = cursor.fetchone()
+    if not mid:
+        raise myException('Invalid major id.')
+    sql = (
+        "INSERT INTO student VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+    )
+    cursor.execute(sql, (data['sid'], data['student_name'], data['did'], data['sex'], data['birthday'], data['ID_number'], data['Email'], data['mid']))
+    cursor.execute(f"INSERT INTO account VALUES ({data['sid']},'666666','S')")#默认密码为666666
     db.commit()
     cursor.close()
 
@@ -77,15 +111,42 @@ def add_student(data: dict):
 def add_teacher(data: dict):
     db = get_db()
     cursor = db.cursor()
-    cursor.execute(f"SELECT did FROM department WHERE did = {data['department']}")
+    # 检查当前教师号是否被占用
+    cursor.execute(f"SELECT tid FROM teacher WHERE tid = {data['tid']}")
+    tid = cursor.fetchone()
+    if tid:
+        raise myException('Teacher id already exists.')
+    # 检查院系是否存在
+    cursor.execute(f"SELECT did FROM department WHERE did = {data['did']}")
     did = cursor.fetchone()
     if not did:
         raise myException('Invalid department id.')
-    cursor.execute(f"INSERT INTO teacher VALUES ({data['tid']},'{data['name']}',{did},'{data['sex']}','{data['birthday']}','{data['id_number']}','{data['email']}',{data['is_admin']})")
-    cursor.execute(f"INSERT INTO account VALUES ({data['tid']},'{data['id_number']}','T')")#默认密码为666666
+    sql = (
+        "INSERT INTO teacher VALUES (%s, %s, %s, %s, %s, %s, %s)"
+    )
+    cursor.execute(sql, (data['tid'], data['did'], data['teacher_name'], data['sex'], data['birthday'], data['ID_number'], data['Email']))
+    cursor.execute(f"INSERT INTO account VALUES ({data['tid']},'666666','T')")#默认密码为666666
     db.commit()
     cursor.close()
 
+# 添加管理员
+def add_admin(data: dict):
+    db = get_db()
+    cursor = db.cursor()
+    # 检查当前管理员号是否被占用
+    cursor.execute(f"SELECT manager_id FROM manager WHERE manager_id = {data['manager_id']}")
+    manager_id = cursor.fetchone()
+    if manager_id:
+        raise myException('Admin id already exists.')
+    sql = (
+        "INSERT INTO manager VALUES (%s, %s, %s)"
+    )
+    cursor.execute(sql, (data['manager_id'], data['manager_name'], data['Email']))
+    cursor.execute(f"INSERT INTO account VALUES ({data['manager_id']},'666666','A')")#默认密码为666666
+    db.commit()
+    cursor.close()
+
+# 获取院系信息
 def get_dept():
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -94,6 +155,7 @@ def get_dept():
     cursor.close()
     return courses
 
+# 获取学生信息，包括学号，姓名，性别，年龄，院系，专业
 def get_student_info(sid):
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -111,14 +173,14 @@ def get_courses(tid):
         "timeslot.day as course_day, timeslot.start_time as course_start_time, timeslot.end_time as course_end_time, "
         "classroom.building_name as building_name, classroom.room_number as room_number, "
         "section.start_week as start_week, section.end_week as end_week "
-        "FROM section, classroom, timeslot, teacher, course, timeslot_classroom_section, teacher_section "
-        "WHERE teacher.tid = %s "
-        "AND teacher_section.tid = teacher.tid "
-        "AND teacher_section.sec_id = section.sec_id "
-        "AND course.cid = section.cid "
-        "AND timeslot_classroom_section.sec_id = section.sec_id "
-        "AND timeslot_classroom_section.classroom_id = classroom.classroom_id "
-        "AND timeslot_classroom_section.timeslot_id = timeslot.timeslot_id "
+        "FROM teacher "
+        "JOIN teacher_section ON teacher.tid = teacher_section.tid "
+        "JOIN section ON teacher_section.sec_id = section.sec_id "
+        "JOIN course ON section.cid = course.cid "
+        "JOIN timeslot_classroom_section ON section.sec_id = timeslot_classroom_section.sec_id "
+        "JOIN timeslot ON timeslot_classroom_section.timeslot_id = timeslot.timeslot_id "
+        "JOIN classroom ON timeslot_classroom_section.classroom_id = classroom.classroom_id "
+        "WHERE teacher.tid = %s"
     )
     cursor.execute(sql, (tid, ))
     courses = cursor.fetchall()
@@ -134,9 +196,7 @@ def get_my_course_info(sid):
         "timeslot.day as course_day, timeslot.start_time as course_start_time, timeslot.end_time as course_end_time, "
         "classroom.building_name as building_name, classroom.room_number as room_number, "
         "section.start_week as start_week, section.end_week as end_week, teacher.teacher_name as teacher_name "
-        "FROM section natural join course natural join teacher natural join "
-        '''
-        "FROM , classroom, timeslot, student, course, timeslot_classroom_section, student_section, , teacher_section "
+        "FROM section, classroom, timeslot, student, course, timeslot_classroom_section, student_section, teacher, teacher_section "
         "WHERE student.sid = %s "
         "AND student_section.sid = student.sid "
         "AND student_section.sec_id = section.sec_id "
@@ -146,7 +206,6 @@ def get_my_course_info(sid):
         "AND timeslot_classroom_section.timeslot_id = timeslot.timeslot_id "
         "AND teacher.tid = teacher_section.tid "
         "AND teacher_section.sec_id = section.sec_id "
-        '''
     )
     cursor.execute(sql, (sid, ))
     courses = cursor.fetchall()
@@ -155,30 +214,56 @@ def get_my_course_info(sid):
 
 # 获取可以选择的课程列表，包括课程id，院系，课程名，教师名，学分，学时，上课时间，上课地点
 def get_course_info(page: int, size: int, sid: int):
-    # 能选的课程是未选过的课程、并且先修课及格的课程、而且是当前学期开的课程
-    # 或者是已经选过的课程，但是是重修的课程
-    # 先获取当前学期，当前学期是已有的学期中最大的
+    # 能选的课程是先修课及格的课程或者没有先修课的课程、而且是当前学期开的课程
+    # 并且人数不超过上限
     db = get_db()
     cursor = db.cursor(dictionary=True)
+    # 先获取当前学期，当前学期是已有的学期中最大的
     cursor.execute("SELECT max(semester_id) as semester_id FROM semester")
-    semester = cursor.fetchone()
+    semester = cursor.fetchone() # 只选择这个学期的课程
 
-    sql = (
-        "SELECT course.cid as course_id, department.department_name as department_name, course.course_name as course_name, "
-        "teacher.teacher_name as teacher_name, course.credit as course_credit, course.hours as course_hours, "
-        "timeslot.day as course_day, timeslot.start_time as course_start_time, timeslot.end_time as course_end_time, "
-        "classroom.building_name as building_name, classroom.room_number as room_number "
-        "FROM course, department, teacher, section, classroom, timeslot, timeslot_classroom_section "
-        "WHERE course.did = department.did "
-        "AND course.cid = section.cid "
-        "AND section.sec_id = timeslot_classroom_section.sec_id "
-        "AND timeslot_classroom_section.classroom_id = classroom.classroom_id "
-        "AND timeslot_classroom_section.timeslot_id = timeslot.timeslot_id "
-        "AND section.sec_id NOT IN (SELECT sec_id FROM student_section WHERE sid = %s) "
-        "AND teacher.tid = section.tid "
-        "LIMIT %s OFFSET %s "
+    sql1 = (
+        "WITH course1 AS (" # course1 是没有先修课的课程：所有课程减去有先修课的课程
+        "   (SELECT cid "
+        "   FROM course) "
+        "   EXCEPT "
+        "   (SELECT DISTINCT cid "
+        "   FROM pre_course) "
+        "), course2 AS (" # course2 是已经选过的课程，并且有成绩的课程 TODO：需不需要考虑及格？
+        "   SELECT DISTINCT cid "
+        "   FROM section, student_section "
+        "   WHERE student_section.sid = %s " # 学生id
+        "   AND student_section.sec_id = section.sec_id " # 学生选的课
+        "   AND student_section.score IS NOT NULL" # 有成绩
+        "), course3 AS ("
+        "   SELECT cid "
+        "   FROM course "
+        "   WHERE cid IN (SELECT cid FROM course1) "
+        "   OR cid IN ("
+        "   SELECT distinct cid "
+        "   FROM pre_course "
+        "   WHERE pre_cid IN (SELECT cid FROM course2) "
+        "   ) "
+        ") " # course3 是可以选的课程，接下来找出这些课程的信息，必须满足：剩余人数大于0，当前学期开课
+        "SELECT course.cid as course_id, course.course_name as course_name, department.dept_name as department_name, "
+        "teacher.teacher_name as teacher_name, course.credit as course_credit, classroom.building_name as building_name, classroom.room_number as room_number, "
+        "timeslot.day as course_day, timeslot.start_time as course_start_time, timeslot.end_time as course_end_time "
+        "FROM course3 "
+        "JOIN course ON course3.cid = course.cid "
+        "JOIN section ON course.cid = section.cid "
+        "JOIN timeslot_classroom_section ON section.sec_id = timeslot_classroom_section.sec_id "
+        "JOIN classroom ON timeslot_classroom_section.classroom_id = classroom.classroom_id "
+        "JOIN timeslot ON timeslot_classroom_section.timeslot_id = timeslot.timeslot_id "
+        "JOIN teacher_section ON section.sec_id = teacher_section.sec_id "
+        "JOIN teacher ON teacher_section.tid = teacher.tid "
+        "JOIN department ON course.did = department.did "
+        "WHERE section.rest_number > 0 "
+        "AND section.semester_id = ("
+        "   SELECT max(semester_id) "
+        "   FROM semester "
+        ")"
     )
-    cursor.execute(sql, (sid, size, page*size))
+    cursor.execute(sql1, (sid, ))
     courses = cursor.fetchall()
     cursor.close()
     return courses
@@ -256,11 +341,10 @@ def get_homeworks(tid, cid):
     return courses
 
 
-
-def change_password(userid, new_password):
+# 修改学生信息，需要提交学生id，修改后的信息，不修改的保持原状
+def change_student(data: dict):
     db = get_db()
     cursor = db.cursor()
-    cursor.execute(f"UPDATE account SET password = '{new_password}' WHERE id = {userid}")
+
     db.commit()
     cursor.close()
-    return

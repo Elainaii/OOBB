@@ -41,6 +41,19 @@ def fetch_teachers():
     num = services.get_teacher_num()
     return {'code': 0, 'message': 'success','page':page_number,'size':page_size , 'total_num': num ,'data': data}
 
+# 获取管理员列表
+@admin_bp.route('/admin/admins', methods=['GET'])
+def fetch_admins():
+    page_number = request.args.get('page')
+    page_size = request.args.get('size')
+    if not page_number or not page_size:
+        return create_response({}, message='page and size are required,such as /admin/admins?size=20&page=0', code=-1)
+    page_number = int(page_number)
+    page_size = int(page_size)
+    data = services.get_admins(page_number, page_size)
+    num = services.get_admin_num()
+    return {'code': 0, 'message': 'success','page':page_number,'size':page_size , 'total_num': num ,'data': data}
+
 #添加学生
 @admin_bp.route('/admin/student/add', methods=['POST'])
 def add_student():
@@ -48,10 +61,10 @@ def add_student():
     try:
         services.add_student(data)
     except myException as e:
-        return create_response({}, message=str(e), code=-1)
+        return jsonify({'code': -1, 'message': str(e)})
     except Exception as e:
-        return create_response({}, message=str(e), code=-1)
-    return create_response(data, message='success', code=0)
+        return jsonify({'code': -1, 'message': str(e)})
+    return jsonify({'code': 0, 'message': 'success','data':data})
 
 #添加教师
 @admin_bp.route('/admin/teacher/add', methods=['POST'])
@@ -60,10 +73,22 @@ def add_teacher():
     try:
         services.add_teacher(data)
     except myException as e:
-        return create_response({}, message=str(e), code=-1)
+        return jsonify({'code': -1, 'message': str(e)})
     except Exception as e:
-        return create_response({}, message=str(e), code=-1)
-    return create_response(data, message='success', code=0)
+        return jsonify({'code': -1, 'message': str(e)})
+    return jsonify({'code': 0, 'message': 'success','data':data})
+
+# 添加管理员
+@admin_bp.route('/admin/admin/add', methods=['POST'])
+def add_admin():
+    data = request.json
+    try:
+        services.add_admin(data)
+    except myException as e:
+        return jsonify({'code': -1, 'message': str(e)})
+    except Exception as e:
+        return jsonify({'code': -1, 'message': str(e)})
+    return jsonify({'code': 0, 'message': 'success','data':data})
 
 #修改学生信息，需要提交学生id，修改后的信息，不修改的设为空
 @admin_bp.route('/admin/student/change', methods=['POST'])
@@ -72,10 +97,11 @@ def change_student():
     try:
         services.change_student(data)
     except myException as e:
-        return create_response({}, message=str(e), code=-1)
+        return jsonify({'code': -1, 'message': str(e)})
     except Exception as e:
-        return create_response({}, message=str(e), code=-1)
-    pass
+        return jsonify({'code': -1, 'message': str(e)})
+    return jsonify({'code': 0, 'message': 'success','data':data})
+
 
 #修改教师信息，需要提交教师id，修改后的信息，不修改保持原状
 @admin_bp.route('/admin/teacher/change', methods=['POST'])
