@@ -258,12 +258,9 @@ def get_course_info(page: int, size: int, sid: int):
         "JOIN teacher ON teacher_section.tid = teacher.tid "
         "JOIN department ON course.did = department.did "
         "WHERE section.rest_number > 0 "
-        "AND section.semester_id = ("
-        "   SELECT max(semester_id) "
-        "   FROM semester "
-        ")"
+        "AND section.semester_id = %s"
     )
-    cursor.execute(sql1, (sid, ))
+    cursor.execute(sql1, (sid, semester['semester_id']))
     courses = cursor.fetchall()
     cursor.close()
     return courses
@@ -340,6 +337,41 @@ def get_homeworks(tid, cid):
     cursor.close()
     return courses
 
+# 学生选课，需要提交课程id
+def select_course(sid, sec_id):
+    db = get_db()
+    cursor = db.cursor()
+    # 由于前端已经获得了能够选的课程，所以这里不需要再次检查
+    # student_section
+    cursor.execute(f"INSERT INTO student_section VALUES ({sid}, {sec_id}, NULL)")
+    # section
+    cursor.execute(f"UPDATE section SET rest_number = rest_number - 1 WHERE sec_id = {sec_id}")
+    db.commit()
+    cursor.close()
+
+# 提交作业，需要提交作业的课程id，作业id，作业内容
+def submit_homework(sid, data: dict):
+    db = get_db()
+    cursor = db.cursor()
+    # 检查是否已经提交过，如果提交过则覆盖
+    cursor.execute(f"SELECT * FROM homework_collection WHERE sid = {sid} AND sec_id = {data['sec_id']} AND homework_name = '{data['homework_name']}'")
+    homework = cursor.fetchone()
+    # 获取当前时间
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    if homework:
+        cursor.execute(f"UPDATE homework_collection SET content = '{data['homework_content']}' WHERE sid = {sid} AND sec_id = {data['sec_id']} AND homework_name = '{data['homework_name']}'")
+        db.commit()
+        cursor.close()
+        return
+    # homework_collection
+    sql = {
+        "INSERT INTO homework_collection VALUES (%s, %s, %s, %s, %s)"
+    }
+
+    cursor.execute(sql, (sid, data['sec_id'], data['homework_name'], data['homework_content'], now))
+
+    db.commit()
+    cursor.close()
 
 # 修改学生信息，需要提交学生id，修改后的信息，不修改的保持原状
 def change_student(data: dict):
@@ -348,3 +380,4 @@ def change_student(data: dict):
 
     db.commit()
     cursor.close()
+
