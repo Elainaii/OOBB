@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QAbstractItemView,QSizePolic
 
 from qfluentwidgets import ScrollArea, MSFluentWindow, FluentIcon, NavigationItemPosition, CommandBar, Action, \
     SearchLineEdit, TableView, CaptionLabel, LineEdit, TransparentDropDownPushButton, setFont, RoundMenu, \
-    TogglePushButton, CheckableMenu, MenuIndicatorType, ElevatedCardWidget
+    TogglePushButton, CheckableMenu, MenuIndicatorType, ElevatedCardWidget, setThemeColor
 
 from src.client.core.account import Account
 from src.client.student.award_interface import AwardInterface
@@ -18,8 +18,9 @@ from src.client.student.selectcourse_interface import SelectCourseInterface
 class StudentMainWindow(MSFluentWindow):
     def __init__(self,account:Account = None, parent=None):
         super().__init__(parent)
-
-        self.myCourseInterface = MyCourseInterface(self)
+        self.account = account
+        self.controller = StudentController(account)
+        self.myCourseInterface = MyCourseInterface(controller=self.controller,parent=self)
         self.myCourseInterface.setObjectName("myCourseInterface")
         self.selectCourseInterface = SelectCourseInterface(self)
         self.selectCourseInterface.setObjectName("selectCourseInterface")
@@ -43,6 +44,7 @@ class StudentMainWindow(MSFluentWindow):
         self.addSubInterface(self.accountInterface, FluentIcon.PEOPLE, "账户", FluentIcon.PEOPLE, isTransparent=True, position=NavigationItemPosition.BOTTOM)
         #self.navigationInterface.addItem("editInterface", FluentIcon.EDIT, "编辑", selectable=False)
 
+        setThemeColor('#f18cb9', lazy=True)
         self.setFixedSize(960, 640)
         self.setWindowTitle('Student')
         self.setWindowIcon(QIcon(':/qfluentwidgets/images/logo.png'))
