@@ -1,3 +1,4 @@
+from Demos.mmapfile_demo import page_size
 from flask import Blueprint, request, jsonify, make_response
 import src.server.services as services
 from src.server.exceptions import *
@@ -24,12 +25,32 @@ def get_awards(sid):
     data = services.get_award(sid)
     return create_response(data, message='success', code=0)
 
-
-#获取学生已选择的课程信息,包括课程名，教师名，学分，学时，上课时间，上课地点    注意，这里的课程信息是学生正在上的课程
+#获取学生已选择的课程信息,包括课程名，教师名，学分，学时，上课时间，上课地点
+# TODO： 增加对学期的过滤条件、对课程状态的过滤条件（根据分数）、搜索课程名字返回课程信息、分页
 @student_bp.route('/student/<int:sid>/courses', methods=['GET'])
 def get_my_course_info(sid):
-    data = services.get_my_course_info(sid)
-    return create_response(data, message='success', code=0)
+    semester_id = request.args.get('semester_id')
+    status = request.args.get('status')
+    course_name = request.args.get('course_name')
+    page_size = request.args.get('size')
+    page_number = request.args.get('page')
+
+    if not page_size or not page_number:
+        return create_response({},
+                               message='page and size are required, such as /student/201011919/courses?size=20&page=0',
+                               code=-1)
+
+    page_size = int(page_size)
+    page_number = int(page_number)
+
+    filters = {
+        'semester_id': semester_id,
+        'status': status,
+        'course_name': course_name
+    }
+
+    data, num = services.get_my_course_info(sid, page_number, page_size, filters)
+    return {'code': 0, 'message': 'success', 'page': page_number, 'size': page_size, 'total_num': num, 'data': data}
 
 #获取学生课程的成绩，包括课程名，学分，成绩
 @student_bp.route('/student/<int:sid>/courses/select', methods=['GET'])
@@ -51,6 +72,7 @@ def submit_homework(sid):
     return jsonify({'code': 0, 'message': 'success'})
 
 #获取可以选择的课程列表，包括课程id，院系，课程名，教师名，学分，学时，上课时间，上课地点
+# TODO： 增加对学期的过滤条件
 @student_bp.route('/student/<int:sid>/courses/info', methods=['GET'])
 def get_course_info(sid):
     page_number = request.args.get('page')
@@ -59,9 +81,8 @@ def get_course_info(sid):
         return create_response({}, message='page and size are required,such as /admin/students?size=20&page=0', code=-1)
     page_number = int(page_number)
     page_size = int(page_size)
-    data = services.get_course_info(page_number, page_size, sid)
-    return {'code': 0, 'message': 'success','page':page_number,'size':page_size , 'data': data}
-    pass
+    data, num = services.get_course_info(page_number, page_size)
+    return {'code': 0, 'message': 'success','page':page_number,'size':page_size , 'total_num': num ,'data': data}
 
 #学生选课，需要提交课程id
 @student_bp.route('/student/<int:sid>/courses/select', methods=['POST'])
@@ -71,6 +92,7 @@ def select_course(sid):
     return jsonify({'code': 0, 'message': 'success'})
 
 #获取学生的个人信息，包括学号，姓名，性别，年龄，院系，专业
+# TODO: 增加计算总学分、平均分
 @student_bp.route('/student/<int:sid>/info', methods=['GET'])
 def get_student_info(sid):
     data = services.get_student_info(sid)

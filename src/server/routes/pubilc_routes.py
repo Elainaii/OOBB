@@ -1,3 +1,4 @@
+from Demos.mmapfile_demo import page_size
 from flask import Blueprint, request, jsonify, make_response
 import src.server.services as services
 from src.server.exceptions import *
@@ -39,3 +40,15 @@ def change_password():
 def get_department():
     data = services.get_dept()
     return create_response(data, message='success', code=0)
+
+# 获取所有学期，分页
+@public_bp.route('/semester', methods=['GET'])
+def get_semester():
+    page_size = request.args.get('size')
+    page_number = request.args.get('page')
+    if not page_size or not page_number:
+        return create_response({}, message='page and size are required,such as /semester?size=20&page=0', code=-1)
+    page_size = int(page_size)
+    page_number = int(page_number)
+    data, num = services.get_semester(page_number, page_size)
+    return {'code': 0, 'message': 'success','page':page_number,'size':page_size , 'total_num': num ,'data': data}

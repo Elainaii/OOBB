@@ -106,6 +106,7 @@ def change_student():
 #修改教师信息，需要提交教师id，修改后的信息，不修改保持原状
 @admin_bp.route('/admin/teacher/change', methods=['POST'])
 def change_teacher():
+
     pass
 
 #添加classroom
@@ -119,5 +120,5 @@ def add_department():
     pass
 
 
-
+# TODO：帮助修改密码（管理员可以修改所有人的密码）
 

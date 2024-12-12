@@ -188,7 +188,7 @@ def get_courses(tid):
     return courses
 
 # 获取学生已选择的课程信息,包括课程名，教师名，学分，学时，上课时间，上课地点
-def get_my_course_info(sid):
+def get_my_course_info(sid , page: int, size: int, filters: dict):
     db = get_db()
     cursor = db.cursor(dictionary=True)
     sql = (
@@ -196,23 +196,57 @@ def get_my_course_info(sid):
         "timeslot.day as course_day, timeslot.start_time as course_start_time, timeslot.end_time as course_end_time, "
         "classroom.building_name as building_name, classroom.room_number as room_number, "
         "section.start_week as start_week, section.end_week as end_week, teacher.teacher_name as teacher_name "
-        "FROM section, classroom, timeslot, student, course, timeslot_classroom_section, student_section, teacher, teacher_section "
-        "WHERE student.sid = %s "
-        "AND student_section.sid = student.sid "
-        "AND student_section.sec_id = section.sec_id "
-        "AND course.cid = section.cid "
-        "AND timeslot_classroom_section.sec_id = section.sec_id "
-        "AND timeslot_classroom_section.classroom_id = classroom.classroom_id "
-        "AND timeslot_classroom_section.timeslot_id = timeslot.timeslot_id "
-        "AND teacher.tid = teacher_section.tid "
-        "AND teacher_section.sec_id = section.sec_id "
+        "FROM course "
+        "JOIN section ON course.cid = section.cid "
+        "JOIN timeslot_classroom_section ON section.sec_id = timeslot_classroom_section.sec_id "
+        "JOIN timeslot ON timeslot_classroom_section.timeslot_id = timeslot.timeslot_id "
+        "JOIN classroom ON timeslot_classroom_section.classroom_id = classroom.classroom_id "
+        "JOIN teacher_section ON section.sec_id = teacher_section.sec_id "
+        "JOIN teacher ON teacher_section.tid = teacher.tid "
+        "JOIN student_section ON section.sec_id = student_section.sec_id "
+        "WHERE student_section.sid = %s "
     )
+    params = [sid]
+    # 先获取总数
     cursor.execute(sql, (sid, ))
+    num = cursor.fetchall()
+    # 获取总数
+    num = len(num)
+    # 通过学期号过滤
+    f1 = filters.get('semester_id')
+    if f1:
+        sql += "AND section.semester_id = %s "
+        params.append(f1)
+    # 通过课程状态过滤
+    f2 = filters.get('status')
+    if f2 is not None:
+        if f2 == 0:
+            # 全部
+            pass
+        elif f2 == 1:
+            # 正在进行
+            sql += "AND student_section.score IS NULL "
+        elif f2 == 2:
+            # 已通过
+            sql += "AND student_section.score >= 60 "
+        elif f2 == 3:
+            sql += "AND student_section.score < 60 "
+    # 通过课程名过滤
+    f3 = filters.get('course_name')
+    if f3:
+        sql += f"AND course.course_name LIKE %s "
+        params.append(f"%{f3}%")
+    # 分页
+    sql += f"limit %s offset %s"
+    params.extend([size, page*size])
+    # 获取课程信息
+    cursor.execute(sql, params)
     courses = cursor.fetchall()
     cursor.close()
-    return courses
+    return courses, num
 
 # 获取可以选择的课程列表，包括课程id，院系，课程名，教师名，学分，学时，上课时间，上课地点
+# 返回可选课程列表以及总数
 def get_course_info(page: int, size: int, sid: int):
     # 能选的课程是先修课及格的课程或者没有先修课的课程、而且是当前学期开的课程
     # 并且人数不超过上限
@@ -263,7 +297,7 @@ def get_course_info(page: int, size: int, sid: int):
     cursor.execute(sql1, (sid, semester['semester_id']))
     courses = cursor.fetchall()
     cursor.close()
-    return courses
+    return courses, len(courses)
 
 # 获取学生课程的成绩，包括课程名，学分，成绩
 def get_selected_course(sid):
@@ -381,3 +415,32 @@ def change_student(data: dict):
     db.commit()
     cursor.close()
 
+# 修改教师信息，需要提交教师id，修改后的信息，不修改保持原状
+def change_teacher(data: dict):
+    db = get_db()
+    cursor = db.cursor()
+
+    db.commit()
+    cursor.close()
+
+# 修改管理员信息，需要提交管理员id，修改后的信息，不修改保持原状
+
+def change_admin(data: dict):
+    db = get_db()
+    cursor = db.cursor()
+
+    db.commit()
+    cursor.close()
+
+# 获取学期信息
+def get_semester(page: int, size: int):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    # 获取学期总数
+    cursor.execute("SELECT count(*) as num FROM semester")
+    num = cursor.fetchone()
+    # 获取学期信息，降序
+    cursor.execute(f"SELECT * FROM semester ORDER BY semester_id DESC limit {size} offset {page*size}")
+    courses = cursor.fetchall()
+    cursor.close()
+    return courses, num['num']
