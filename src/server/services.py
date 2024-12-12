@@ -156,10 +156,43 @@ def get_dept():
     return courses
 
 # 获取学生信息，包括学号，姓名，性别，年龄，院系，专业
+# 还要返回总学分和平均分（平均分只用算已通过的课程、并且不用加权）
 def get_student_info(sid):
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute(f"SELECT * FROM student WHERE sid = {sid}")
+    sql = (
+        # 总学分：已通过的课程的学分之和，需要排除重复的课程
+        # 平均分：已经选择过的课程的平均分，需要排除重复的课程，每门课取最高分
+        # 先得到每门课的最高分
+        # 然后根据最高分和学分计算总学分以及平均分
+        "WITH max_score AS ( "
+        "   SELECT max(student_section.score) as score, course.credit as credit "
+        "    FROM student_section "
+        "    JOIN section ON student_section.sec_id = section.sec_id "
+        "    JOIN course ON section.cid = course.cid "
+        "    WHERE student_section.sid = %s "
+        "    AND student_section.score IS NOT NULL "
+        "    GROUP BY course.cid "
+        "), total_credit AS ( "
+        "    SELECT sum(credit) as total_credit "
+        "    FROM max_score "
+        "    WHERE score >= 60 "
+        "), avg_score AS ( "
+        "   SELECT avg(score) as avg_score "
+        "   FROM max_score "
+        ") "
+        "SELECT student.sid as student_id, student.student_name as student_name, "
+        "student.sex as student_sex, student.birthday as student_birthday, "
+        "department.dept_name as department_name, major.major_name as major_name, "
+        "total_credit.total_credit as total_credit, avg_score.avg_score as avg_score "
+        "FROM student "
+        "JOIN department ON student.did = department.did "
+        "JOIN major ON student.mid = major.mid "
+        "JOIN total_credit ON true "
+        "JOIN avg_score ON true "
+        "WHERE student.sid = %s "
+    )
+    cursor.execute(sql, (sid, sid))
     student = cursor.fetchone()
     cursor.close()
     return student
@@ -207,11 +240,7 @@ def get_my_course_info(sid , page: int, size: int, filters: dict):
         "WHERE student_section.sid = %s "
     )
     params = [sid]
-    # 先获取总数
-    cursor.execute(sql, (sid, ))
-    num = cursor.fetchall()
-    # 获取总数
-    num = len(num)
+
     # 通过学期号过滤
     f1 = filters.get('semester_id')
     if f1:
@@ -236,6 +265,11 @@ def get_my_course_info(sid , page: int, size: int, filters: dict):
     if f3:
         sql += f"AND course.course_name LIKE %s "
         params.append(f"%{f3}%")
+    # 先获取总数
+    cursor.execute(sql, (sid, ))
+    num = cursor.fetchall()
+    # 获取总数
+    num = len(num)
     # 分页
     sql += f"limit %s offset %s"
     params.extend([size, page*size])
@@ -411,7 +445,43 @@ def submit_homework(sid, data: dict):
 def change_student(data: dict):
     db = get_db()
     cursor = db.cursor()
-
+    # 检查学生是否存在
+    cursor.execute("SELECT sid FROM student WHERE sid = %s", (data['sid'],))
+    sid = cursor.fetchone()
+    if not sid:
+        raise myException('Student id does not exist.')
+    # 根据传入的信息修改学生信息，不修改的保持原状，但是要检查
+    # 姓名
+    if 'student_name' in data and data['student_name']:
+        cursor.execute("UPDATE student SET student_name = %s WHERE sid = %s", (data['student_name'], data['sid']))
+    # 院系
+    if 'did' in data and data['did']:
+        # 检查院系是否存在
+        cursor.execute("SELECT did FROM department WHERE did = %s", (data['did'],))
+        did = cursor.fetchone()
+        if not did:
+            raise myException('Invalid department id.')
+        cursor.execute("UPDATE student SET did = %s WHERE sid = %s", (data['did'], data['sid']))
+    # 性别
+    if 'sex' in data and data['sex']:
+        cursor.execute("UPDATE student SET sex = %s WHERE sid = %s", (data['sex'], data['sid']))
+    # 生日
+    if 'birthday' in data and data['birthday']:
+        cursor.execute("UPDATE student SET birthday = %s WHERE sid = %s", (data['birthday'], data['sid']))
+    # 身份证号
+    if 'ID_number' in data and data['ID_number']:
+        cursor.execute("UPDATE student SET ID_number = %s WHERE sid = %s", (data['ID_number'], data['sid']))
+    # 邮箱
+    if 'Email' in data and data['Email']:
+        cursor.execute("UPDATE student SET Email = %s WHERE sid = %s", (data['Email'], data['sid']))
+    # 专业
+    if 'mid' in data and data['mid']:
+        # 检查专业是否存在
+        cursor.execute("SELECT mid FROM major WHERE mid = %s", (data['mid'],))
+        mid = cursor.fetchone()
+        if not mid:
+            raise myException('Invalid major id.')
+        cursor.execute("UPDATE student SET mid = %s WHERE sid = %s", (data['mid'], data['sid']))
     db.commit()
     cursor.close()
 
@@ -419,7 +489,35 @@ def change_student(data: dict):
 def change_teacher(data: dict):
     db = get_db()
     cursor = db.cursor()
-
+    # 检查教师是否存在
+    cursor.execute("SELECT tid FROM teacher WHERE tid = %s", (data['tid'],))
+    tid = cursor.fetchone()
+    if not tid:
+        raise myException('Teacher id does not exist.')
+    # 根据传入的信息修改教师信息，不修改的保持原状，但是要检查
+    # 姓名
+    if 'teacher_name' in data and data['teacher_name']:
+        cursor.execute("UPDATE teacher SET teacher_name = %s WHERE tid = %s", (data['teacher_name'], data['tid']))
+    # 院系
+    if 'did' in data and data['did']:
+        # 检查院系是否存在
+        cursor.execute("SELECT did FROM department WHERE did = %s", (data['did'],))
+        did = cursor.fetchone()
+        if not did:
+            raise myException('Invalid department id.')
+        cursor.execute("UPDATE teacher SET did = %s WHERE tid = %s", (data['did'], data['tid']))
+    # 性别
+    if 'sex' in data and data['sex']:
+        cursor.execute("UPDATE teacher SET sex = %s WHERE tid = %s", (data['sex'], data['tid']))
+    # 生日
+    if 'birthday' in data and data['birthday']:
+        cursor.execute("UPDATE teacher SET birthday = %s WHERE tid = %s", (data['birthday'], data['tid']))
+    # 身份证号
+    if 'ID_number' in data and data['ID_number']:
+        cursor.execute("UPDATE teacher SET ID_number = %s WHERE tid = %s", (data['ID_number'], data['tid']))
+    # 邮箱
+    if 'Email' in data and data['Email']:
+        cursor.execute("UPDATE teacher SET Email = %s WHERE tid = %s", (data['Email'], data['tid']))
     db.commit()
     cursor.close()
 
@@ -428,6 +526,18 @@ def change_teacher(data: dict):
 def change_admin(data: dict):
     db = get_db()
     cursor = db.cursor()
+    # 检查管理员是否存在
+    cursor.execute("SELECT manager_id FROM manager WHERE manager_id = %s", (data['manager_id'],))
+    manager_id = cursor.fetchone()
+    if not manager_id:
+        raise myException('Admin id does not exist.')
+    # 根据传入的信息修改管理员信息，不修改的保持原状，但是要检查
+    # 姓名
+    if 'manager_name' in data and data['manager_name']:
+        cursor.execute("UPDATE manager SET manager_name = %s WHERE manager_id = %s", (data['manager_name'], data['manager_id']))
+    # 邮箱
+    if 'Email' in data and data['Email']:
+        cursor.execute("UPDATE manager SET Email = %s WHERE manager_id = %s", (data['Email'], data['manager_id']))
 
     db.commit()
     cursor.close()
@@ -444,3 +554,31 @@ def get_semester(page: int, size: int):
     courses = cursor.fetchall()
     cursor.close()
     return courses, num['num']
+
+# 添加院系
+def add_department(data: dict):
+    db = get_db()
+    cursor = db.cursor()
+    # 检查院系是否存在
+    cursor.execute("SELECT did FROM department WHERE did = %s", (data['did'],))
+    did = cursor.fetchone()
+    if did:
+        raise myException('Department id already exists.')
+    # 添加院系
+    cursor.execute("INSERT INTO department VALUES (%s, %s)", (data['did'], data['dept_name']))
+    db.commit()
+    cursor.close()
+
+# 添加新的学期
+def add_semester(data: dict):
+    db = get_db()
+    cursor = db.cursor()
+    # 检查学期是否存在
+    cursor.execute("SELECT semester_id FROM semester WHERE semester_id = %s", (data['semester_id'],))
+    semester_id = cursor.fetchone()
+    if semester_id:
+        raise myException('Semester id already exists.')
+    # 添加学期
+    cursor.execute("INSERT INTO semester VALUES (%s, %s, %s)", (data['semester_id'], data['year'], data['season']))
+    db.commit()
+    cursor.close()

@@ -26,7 +26,6 @@ def get_awards(sid):
     return create_response(data, message='success', code=0)
 
 #获取学生已选择的课程信息,包括课程名，教师名，学分，学时，上课时间，上课地点
-# TODO： 增加对学期的过滤条件、对课程状态的过滤条件（根据分数）、搜索课程名字返回课程信息、分页
 @student_bp.route('/student/<int:sid>/courses', methods=['GET'])
 def get_my_course_info(sid):
     semester_id = request.args.get('semester_id')
@@ -72,7 +71,6 @@ def submit_homework(sid):
     return jsonify({'code': 0, 'message': 'success'})
 
 #获取可以选择的课程列表，包括课程id，院系，课程名，教师名，学分，学时，上课时间，上课地点
-# TODO： 增加对学期的过滤条件
 @student_bp.route('/student/<int:sid>/courses/info', methods=['GET'])
 def get_course_info(sid):
     page_number = request.args.get('page')
@@ -92,9 +90,7 @@ def select_course(sid):
     return jsonify({'code': 0, 'message': 'success'})
 
 #获取学生的个人信息，包括学号，姓名，性别，年龄，院系，专业
-# TODO: 增加计算总学分、平均分
 @student_bp.route('/student/<int:sid>/info', methods=['GET'])
 def get_student_info(sid):
     data = services.get_student_info(sid)
     return create_response(data, message='success', code=0)
-

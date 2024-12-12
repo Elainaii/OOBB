@@ -102,23 +102,51 @@ def change_student():
         return jsonify({'code': -1, 'message': str(e)})
     return jsonify({'code': 0, 'message': 'success','data':data})
 
-
 #修改教师信息，需要提交教师id，修改后的信息，不修改保持原状
 @admin_bp.route('/admin/teacher/change', methods=['POST'])
 def change_teacher():
+    data = request.json
+    try:
+        services.change_teacher(data)
+    except myException as e:
+        return jsonify({'code': -1, 'message': str(e)})
+    except Exception as e:
+        return jsonify({'code': -1, 'message': str(e)})
+    return jsonify({'code': 0, 'message': 'success','data':data})
 
-    pass
+#修改管理员信息，需要提交管理员id，修改后的信息，不修改保持原状
+@admin_bp.route('/admin/admin/change', methods=['POST'])
+def change_admin():
+    data = request.json
+    try:
+        services.change_admin(data)
+    except myException as e:
+        return jsonify({'code': -1, 'message': str(e)})
+    except Exception as e:
+        return jsonify({'code': -1, 'message': str(e)})
+    return jsonify({'code': 0, 'message': 'success','data':data})
 
-#添加classroom
-@admin_bp.route('/admin/classroom/add', methods=['GET'])
-def add_classroom():
-    pass
-
-#添加院系
-@admin_bp.route('/admin/department/add', methods=['GET'])
+# 添加院系
+@admin_bp.route('/admin/department/add', methods=['POST'])
 def add_department():
-    pass
+    data = request.json
+    try:
+        services.add_department(data)
+    except myException as e:
+        return jsonify({'code': -1, 'message': str(e)})
+    except Exception as e:
+        return jsonify({'code': -1, 'message': str(e)})
+    return jsonify({'code': 0, 'message': 'success','data':data})
 
-
-# TODO：帮助修改密码（管理员可以修改所有人的密码）
+# 添加一个新学期
+@admin_bp.route('/admin/semester/add', methods=['POST'])
+def add_semester():
+    data = request.json
+    try:
+        services.add_semester(data)
+    except myException as e:
+        return jsonify({'code': -1, 'message': str(e)})
+    except Exception as e:
+        return jsonify({'code': -1, 'message': str(e)})
+    return jsonify({'code': 0, 'message': 'success','data':data})
 

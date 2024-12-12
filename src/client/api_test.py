@@ -53,12 +53,17 @@ r = requests.post("http://127.0.0.1:5000/student/201011919/courses/homework/subm
 )
 '''
 
-response = requests.get("http://127.0.0.1:5000/student/201011919/courses/", params={
-    'semester_id': '99',
-    'status': '0',
-    'course_name': '魂学导论',
-    'size': '20',
-    'page': '0'
+r = requests.post("http://127.0.0.1:5000/admin/student/change", json = {
+    'sid': '201011919',
+    'student_name': '',
+    'did': '1060',
+    'sex': '',
+    'birthday': '',
+    'ID_number': '',
+    'Email': '',
+    'mid': '1176'
 })
 
-print(response.text)
+
+
+print(r.text)
