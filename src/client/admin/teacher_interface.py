@@ -1,4 +1,4 @@
-from PySide6.QtGui import QIcon, QStandardItem, QStandardItemModel, QActionGroup
+from PySide6.QtGui import QIcon, QStandardItem, QStandardItemModel, QActionGroup, QAction, QCursor
 from PySide6.QtCore import Qt, QSortFilterProxyModel,QAbstractItemModel
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QAbstractItemView,QSizePolicy,QTableView,QHeaderView
 
@@ -6,33 +6,29 @@ from qfluentwidgets import ScrollArea, MSFluentWindow, FluentIcon, NavigationIte
     SearchLineEdit, TableView, CaptionLabel, LineEdit, TransparentDropDownPushButton, setFont, RoundMenu, \
     TogglePushButton, CheckableMenu, MenuIndicatorType, ElevatedCardWidget
 
-from src.client.core.account import Account,StudentController
+from src.client.core.account import Account, AdminController
 
 
+class TeacherController():
+    def __init__(self,account:Account):
+        data = account.get_my_course()
+        #TODO
 
 
-class MyCourseTableView(TableView):
-    def __init__(self,controller:StudentController,parent = None):
+class TeacherTableView(TableView):
+    def __init__(self,parent = None):
         super().__init__(parent)
+        from faker import Faker
+        fake = Faker(locale='zh-CN')
 
-        controller.set_my_course_filter(controller.account.curr_semester,'0','')
-        controller.init_course_list()
-        data = controller.course_list
+        data = [[fake.name(), fake.address(), fake.ascii_free_email(), fake.phone_number()] for
+                _ in range(50)]
 
         model = QStandardItemModel()
         for i, row in enumerate(data):
-            model.setItem(i, 0, QStandardItem(str(row['course_id'])))
-            model.setItem(i, 1, QStandardItem(row['course_name']))
-            model.setItem(i, 2, QStandardItem(row['building_name'] +" "+ str(row['room_number'])))
-            model.setItem(i, 3, QStandardItem(row['teacher_name']))
-            model.setItem(i, 4, QStandardItem(str(row['start_week'])))
-            model.setItem(i, 5, QStandardItem(str(row['end_week'])))
-            model.setItem(i, 6, QStandardItem(str(row['course_credit'])))
-            model.setItem(i, 7, QStandardItem(str('周' + str(row['course_day']) +' '+ str(row['course_start_time']) + "-" + str(row['course_end_time']))))
-            #model.setItem(i, 7, QStandardItem(str(row['grade'])))
-
-
-        model.setHorizontalHeaderLabels(['课程id','名称', '上课地址', '教师', '开始周数','结束周数','学分','时间','成绩'])
+            for j, item in enumerate(row):
+                model.setItem(i, j, QStandardItem(item))
+        model.setHorizontalHeaderLabels(['课程id','名称', '上课地址', '教师', '开始周数','结束周数','学分','成绩'])
 
         self.agentModel = QSortFilterProxyModel()
         self.agentModel.setSourceModel(model)
@@ -44,12 +40,31 @@ class MyCourseTableView(TableView):
         self.resizeColumnsToContents()
         self.setSortingEnabled(True)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.create_rightmenu)
+
+    def create_rightmenu(self,pos):
+        menu = RoundMenu()
+        #self.l.setCurrentIndex(Q)
+        # 逐个添加动作，Action 继承自 QAction，接受 FluentIconBase 类型的图标
+        menu.addAction(Action(FluentIcon.COPY, '复制', triggered=lambda: print("复制成功")))
+        menu.addAction(Action(FluentIcon.DELETE, '删除', triggered=lambda: print("删除成功")))
+        menu.addAction(Action(FluentIcon.EDIT,'修改密码',triggered= lambda :print("修改密码")))
+        menu.addAction(Action(FluentIcon.LABEL,'修改信息',triggered = lambda :print("修改信息")))
 
 
-class MyCourseFilterMenu(TransparentDropDownPushButton):
-    def __init__(self,text,Icon,controller:StudentController):
+        # 批量添加动作
+        # 添加分割线
+        # 子菜单
+
+        #menu.addAction(QAction('全选', shortcut='Ctrl+A'))
+        menu.exec(QCursor.pos())
+
+
+class TeacherFilterMenu(TransparentDropDownPushButton):
+    def __init__(self,str,Icon):
         super().__init__()
-        self.setText(text)
+        self.setText(str)
         self.setIcon(Icon)
         setFont(self, 12)
         menu = RoundMenu(parent=self)
@@ -71,12 +86,6 @@ class MyCourseFilterMenu(TransparentDropDownPushButton):
 
         # 这里请求学期列表，
         self.submenu2 = CheckableMenu('学期', indicatorType=MenuIndicatorType.RADIO)
-        self.actionList = []
-        for i,semester in enumerate(controller.account.semester_list):
-            self.actionList.append(Action(FluentIcon.CALENDAR, str(semester['year']) + str(semester['season']),checkable=True))
-            self.submenu2.addAction(self.actionList[i])
-
-
 
         menu.addMenu(self.submenu1)
         menu.addMenu(self.submenu2)
@@ -84,8 +93,10 @@ class MyCourseFilterMenu(TransparentDropDownPushButton):
 
 
 
-class MyCousreCommandBar(CommandBar):
-    def __init__(self,controller:StudentController,parent = None):
+
+
+class TeacherCommandBar(CommandBar):
+    def __init__(self,parent = None):
         super().__init__(parent)
         self.addAction(Action(FluentIcon.SYNC, "", self))
         self.addAction(Action(FluentIcon.COPY, "", self))
@@ -106,7 +117,7 @@ class MyCousreCommandBar(CommandBar):
         self.addWidget(self.pageLabel2)
         self.addSeparator()
 
-        self.filterMenu = MyCourseFilterMenu('过滤',FluentIcon.FILTER,controller)
+        self.filterMenu = TeacherFilterMenu('过滤',FluentIcon.FILTER)
         self.addWidget(self.filterMenu)
 
         # self.addSeparator()
@@ -116,20 +127,19 @@ class MyCousreCommandBar(CommandBar):
 
 
 
-class MyCourseInterface(ScrollArea):
+class TeacherInterface(ScrollArea):
 
-    def __init__(self,controller ,parent=None):
+    def __init__(self,controller :AdminController, parent=None):
         super().__init__(parent)
 
         self.view = QWidget(self)
-        self.controller = controller
 
         self.vBoxLayout = QVBoxLayout(self.view)
 
-        self.commandBar = MyCousreCommandBar(self.controller,self.view)
-        self.table = MyCourseTableView(self.controller,self)
+        self.commandBar = TeacherCommandBar(self.view)
+        self.table = TeacherTableView(self)
 
-
+        self.commandBar.search.textEdited.connect(lambda str1: self.table.agentModel.setFilterRegularExpression(str1))
 
         self.setWidget(self.view)
         self.setWidgetResizable(True)
