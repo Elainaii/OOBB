@@ -198,9 +198,10 @@ def get_student_info(sid):
     return student
 
 # 获取教师所教课程列表，返回课程id，课程名，学分，学时，上课时间，上课地点
-def get_courses(tid):
+def get_courses(tid, page: int, size: int, filters: dict):
     db = get_db()
     cursor = db.cursor(dictionary=True)
+
     sql = (
         "SELECT course.cid as course_id, course.course_name as course_name, course.credit as course_credit, "
         "timeslot.day as course_day, timeslot.start_time as course_start_time, timeslot.end_time as course_end_time, "
@@ -213,12 +214,31 @@ def get_courses(tid):
         "JOIN timeslot_classroom_section ON section.sec_id = timeslot_classroom_section.sec_id "
         "JOIN timeslot ON timeslot_classroom_section.timeslot_id = timeslot.timeslot_id "
         "JOIN classroom ON timeslot_classroom_section.classroom_id = classroom.classroom_id "
-        "WHERE teacher.tid = %s"
+        "WHERE teacher.tid = %s "
     )
-    cursor.execute(sql, (tid, ))
+    params = [tid]
+
+    # 根据学期号过滤
+    f1 = filters.get('semester_id')
+    if f1:
+        sql += "AND section.semester_id = %s "
+        params.append(f1)
+    # 根据课程名过滤
+    f2 = filters.get('course_name')
+    if f2:
+        sql += "AND course.course_name LIKE %s "
+        params.append(f"%{f2}%")
+    # 先获取总数
+    cursor.execute(sql, params)
+    num = cursor.fetchall()
+    # 分页
+    sql += f"limit %s offset %s"
+    params.extend([size, page*size])
+    # 获取课程信息
+    cursor.execute(sql, params)
     courses = cursor.fetchall()
     cursor.close()
-    return courses
+    return courses, len(num)
 
 # 获取学生已选择的课程信息,包括课程名，教师名，学分，学时，上课时间，上课地点
 def get_my_course_info(sid , page: int, size: int, filters: dict):
@@ -369,7 +389,7 @@ def get_homework(sid):
     return courses
 
 # 获取某个课程的学生列表，返回学生的id，姓名
-def get_course_students(tid, cid):
+def get_course_students(tid, cid, page: int, size: int, filters: dict):
     db = get_db()
     cursor = db.cursor(dictionary=True)
     sql = (
@@ -378,15 +398,28 @@ def get_course_students(tid, cid):
         "JOIN student_section ON student.sid = student_section.sid "
         "JOIN section ON student_section.sec_id = section.sec_id "
         "JOIN teacher_section ON section.sec_id = teacher_section.sec_id "
-        "where teacher_section.tid = %s and section.cid = %s"
+        "where teacher_section.tid = %s and section.cid = %s "
     )
-    cursor.execute(sql, (tid, cid))
+    params = [tid, cid]
+    # 根据学期号过滤
+    f1 = filters.get('semester_id')
+    if f1:
+        sql += "AND section.semester_id = %s "
+        params.append(f1)
+    # 先获取总数
+    cursor.execute(sql, params)
+    num = cursor.fetchall()
+    # 分页
+    sql += f"limit %s offset %s"
+    params.extend([size, page*size])
+    # 获取学生信息
+    cursor.execute(sql, params)
     courses = cursor.fetchall()
     cursor.close()
-    return courses
+    return courses, len(num)
 
 # 获取学生作业提交情况，返回学生id，姓名，作业id，作业内容，提交时间，可以在前端进行批改
-def get_homeworks(tid, cid):
+def get_homeworks(tid, cid, page: int, size: int, filters: dict):
     db = get_db()
     cursor = db.cursor(dictionary=True)
     sql = (
@@ -398,12 +431,42 @@ def get_homeworks(tid, cid):
         "JOIN homework_collection ON student.sid = homework_collection.sid "
         "JOIN section ON homework_collection.sec_id = section.sec_id "
         "JOIN teacher_section ON section.sec_id = teacher_section.sec_id "
-        "where teacher_section.tid = %s and section.cid = %s"
+        "where teacher_section.tid = %s and section.cid = %s "
     )
-    cursor.execute(sql, (tid, cid))
+    params = [tid, cid]
+    # 根据学期号过滤
+    f1 = filters.get('semester_id')
+    if f1:
+        sql += "AND section.semester_id = %s "
+        params.append(f1)
+    # 根据学生姓名过滤
+    f2 = filters.get('student_name')
+    if f2:
+        sql += "AND student.student_name LIKE %s "
+        params.append(f"%{f2}%")
+    # 根据是否批改过过滤
+    f3 = filters.get('status')
+    if f3 is not None:
+        if f3 == 0:
+            # 全部
+            pass
+        elif f3 == 1:
+            # 未批改
+            sql += "AND homework_collection.score IS NULL "
+        elif f3 == 2:
+            # 已批改
+            sql += "AND homework_collection.score IS NOT NULL "
+    # 先获取总数
+    cursor.execute(sql, params)
+    num = cursor.fetchall()
+    # 分页
+    sql += f"limit %s offset %s"
+    params.extend([size, page*size])
+    # 获取学生信息
+    cursor.execute(sql, params)
     courses = cursor.fetchall()
     cursor.close()
-    return courses
+    return courses, len(num)
 
 # 学生选课，需要提交课程id
 def select_course(sid, sec_id):
@@ -580,5 +643,139 @@ def add_semester(data: dict):
         raise myException('Semester id already exists.')
     # 添加学期
     cursor.execute("INSERT INTO semester VALUES (%s, %s, %s)", (data['semester_id'], data['year'], data['season']))
+    db.commit()
+    cursor.close()
+
+# 设置奖惩
+def award(data: dict):
+    db = get_db()
+    cursor = db.cursor()
+    # 检查学生是否存在
+    cursor.execute("SELECT sid FROM student WHERE sid = %s", (data['sid'],))
+    sid = cursor.fetchone()
+    if not sid:
+        raise myException('Student id does not exist.')
+    # 添加奖惩
+    cursor.execute("INSERT INTO award VALUES (%s, %s, %s)", (data['sid'], data['award_name'], data['award_content']))
+    db.commit()
+    cursor.close()
+
+# 设置学生作业成绩（批改作业）， 需要提交学生id，课程id(sec_id)，作业名，成绩
+def set_grade_homework(data:dict):
+    db = get_db()
+    cursor = db.cursor()
+    # 批改作业的前提是能通过上面的找到作业，前端能够返回所有正确的值
+    # 检查是否已经批改过，如果批改过则覆盖(其实不检查也可以，直接update)
+    sql1 = (
+        "UPDATE homework_collection "
+        "SET score = %s "
+        "WHERE sid = %s "
+        "AND sec_id = %s "
+        "AND homework_name = %s"
+    )
+    params = [data['score'], data['sid'], data['sec_id'], data['homework_name']]
+    cursor.execute(sql1, params)
+    db.commit()
+    cursor.close()
+
+# 添加作业
+def add_homework(data: dict):
+    db = get_db()
+    cursor = db.cursor()
+    # 添加作业
+    cursor.execute("INSERT INTO homework VALUES (%s, %s, %s, %s)", (data['sec_id'], data['homework_name'], data['homework_content'], data['deadline']))
+    db.commit()
+    cursor.close()
+
+# 设置学生成绩，需要提交学生id，课程id，成绩
+def set_grade(data: dict):
+    db = get_db()
+    cursor = db.cursor()
+    # 设置成绩
+    cursor.execute("UPDATE student_section SET score = %s WHERE sid = %s AND sec_id = %s", (data['score'], data['sid'], data['sec_id']))
+    db.commit()
+    cursor.close()
+
+# 添加课程：从已经存在的课程中选择，需要提交课程id，教师id，学期id
+# 前端传入的参数：课程id cid, 学期id semester_id， 想要选择的教室id classroom_id， 想要选择的时间段 time_slot_id  还有sec_id  最大人数
+def add_course(tid, data: dict):
+    db = get_db()
+    cursor = db.cursor()
+
+    try:
+        # 检查时间和教室是否冲突
+        semester_id = data['semester_id']
+        timeslot_id = data['timeslot_id']
+        classroom_id = data['classroom_id']
+
+        sql0 = (
+            "SELECT section.sec_id "
+            "FROM section "
+            "JOIN timeslot_classroom_section ON section.sec_id = timeslot_classroom_section.sec_id "
+            "WHERE section.semester_id = %s AND timeslot_classroom_section.timeslot_id = %s AND timeslot_classroom_section.classroom_id = %s"
+        )
+        cursor.execute(sql0, (semester_id, timeslot_id, classroom_id))
+        timeslot_classroom_section = cursor.fetchone()
+        if timeslot_classroom_section:
+            raise myException('Time and classroom conflict.')
+
+        # 检查是否已经存在sec_id
+        sql1 = "SELECT sec_id FROM section WHERE sec_id = %s"
+        cursor.execute(sql1, (data['sec_id'],))
+        sec_id = cursor.fetchone()
+
+        if sec_id is None:
+            # 插入新的section
+            sql2 = (
+                "INSERT INTO section (sec_id, cid, start_week, end_week, max_students, semester_id, rest_number) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            )
+            cursor.execute(sql2, (
+            data['sec_id'], data['cid'], data['start_week'], data['end_week'], data['max_number'], data['semester_id'],
+            data['max_number']))
+
+            # 提交事务以使插入的sec_id可见
+            db.commit()
+
+            # 插入新的teacher_section
+            sql3 = (
+                "INSERT INTO teacher_section (tid, sec_id) "
+                "VALUES (%s, %s)"
+            )
+            cursor.execute(sql3, (tid, data['sec_id']))
+
+        # 提交事务以使插入的teacher_section可见
+        db.commit()
+
+        # 插入timeslot_classroom_section
+        sql4 = (
+            "INSERT INTO timeslot_classroom_section (timeslot_id, classroom_id, sec_id) "
+            "VALUES (%s, %s, %s)"
+        )
+        cursor.execute(sql4, (timeslot_id, classroom_id, data['sec_id']))
+
+        # 提交事务
+        db.commit()
+    except Exception as e:
+        # 出现异常时回滚事务
+        db.rollback()
+        raise e
+    finally:
+        cursor.close()
+
+# 开一门新课
+def new_course(data:dict):
+    db = get_db()
+    cursor = db.cursor()
+    # 检查课程是否存在，不允许同名课程存在
+    cursor.execute("SELECT cid FROM course WHERE course_name = %s", (data['course_name'],))
+    course = cursor.fetchone()
+    if course:
+        raise myException('Course already exists.')
+    # 直接插入新的课程
+    sql = (
+        "INSERT INTO course(cid, course_name, did, credit) VALUES(%s, %s, %s, %s)"
+    )
+    cursor.execute(sql, (data['cid'], data['course_name'], data['did'], data['credit']))
     db.commit()
     cursor.close()

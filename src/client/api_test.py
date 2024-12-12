@@ -53,6 +53,7 @@ r = requests.post("http://127.0.0.1:5000/student/201011919/courses/homework/subm
 )
 '''
 
+'''
 r = requests.post("http://127.0.0.1:5000/admin/student/change", json = {
     'sid': '201011919',
     'student_name': '',
@@ -64,6 +65,21 @@ r = requests.post("http://127.0.0.1:5000/admin/student/change", json = {
     'mid': '1176'
 })
 
+'''
 
+'''
+r = requests.post("http://127.0.0.1:5000/teacher/award", json = {
+    'sid': '201011919',
+    'award_name': '期中魂学优秀奖',
+    'award_content': '暖暖同学在期中考试中取得了优异的成绩'
+})
+'''
+
+r = requests.post("http://127.0.0.1:5000/teacher/20240001/courses/new", json = {
+    'cid': '1197',
+    'did': '1060',
+    'course_name': '魂学地图设计：升降机与箱庭',
+    'credit': '6',
+})
 
 print(r.text)
