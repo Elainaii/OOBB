@@ -152,12 +152,6 @@ def change_department():
 # 添加一个新学期
 @admin_bp.route('/admin/semester/add', methods=['POST'])
 def add_semester():
-    data = request.json
-    try:
-        services.add_semester(data)
-    except myException as e:
-        return jsonify({'code': -1, 'message': str(e)})
-    except Exception as e:
-        return jsonify({'code': -1, 'message': str(e)})
-    return jsonify({'code': 0, 'message': 'success','data':data})
+    services.add_semester()
+    return jsonify({'code': 0, 'message': 'success'})
 

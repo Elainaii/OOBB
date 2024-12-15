@@ -639,16 +639,35 @@ def add_department(data: dict):
     cursor.close()
 
 # 添加新的学期
-def add_semester(data: dict):
+def add_semester():
     db = get_db()
     cursor = db.cursor()
-    # 检查学期是否存在
-    cursor.execute("SELECT semester_id FROM semester WHERE semester_id = %s", (data['semester_id'],))
-    semester_id = cursor.fetchone()
-    if semester_id:
-        raise myException('Semester id already exists.')
+
+    seasons = ['春', '夏', '秋', '冬']
+
     # 添加学期
-    cursor.execute("INSERT INTO semester VALUES (%s, %s, %s)", (data['semester_id'], data['year'], data['season']))
+    # 获取当前最大学期号，然后加1
+    cursor.execute("SELECT max(semester_id) as semester_id FROM semester")
+    semester = cursor.fetchone()
+    semester_id = semester['semester_id'] + 1
+    # 获取要添加的学期的年份
+    # 先看最新一个学期的年份，再看季节，如果是冬季则年份加1，否则不变
+    cursor.execute("SELECT year, season FROM semester WHERE semester_id = %s", (semester['semester_id'],))
+    year_season = cursor.fetchone()
+    year = year_season['year']
+    season = year_season['season']
+    i = 0
+    if season == '冬':
+        year += 1
+        i = 0
+    elif season == '春':
+        i = 1
+    elif season == '夏':
+        i = 2
+    elif season == '秋':
+        i = 3
+    # 添加新的学期
+    cursor.execute("INSERT INTO semester VALUES (%s, %s, %s)", (semester_id, year, seasons[i]))
     db.commit()
     cursor.close()
 
