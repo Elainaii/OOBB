@@ -60,8 +60,15 @@ def selected_course(sid):
 #获取学生所有课程的作业，包括课程名，作业内容，截止时间
 @student_bp.route('/student/<int:sid>/courses/homework', methods=['GET'])
 def get_homework(sid):
-    data = services.get_homework(sid)
-    return create_response(data, message='success', code=0)
+    # 翻页
+    page_number = request.args.get('page')
+    page_size = request.args.get('size')
+    if not page_number or not page_size:
+        return create_response({}, message='page and size are required,such as /admin/students?size=20&page=0', code=-1)
+    page_number = int(page_number)
+    page_size, num = int(page_size)
+    data = services.get_homework(sid, page_number, page_size)
+    return {'code': 0, 'message': 'success', 'page': page_number, 'size': page_size, 'total_num': num, 'data': data}
 
 #提交作业，需要提交作业的课程id，作业id，作业内容
 @student_bp.route('/student/<int:sid>/courses/homework/submit', methods=['POST'])

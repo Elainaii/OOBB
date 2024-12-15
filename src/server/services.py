@@ -371,7 +371,7 @@ def get_selected_course(sid):
     return courses
 
 # 获取学生所有课程的作业，包括课程名，作业内容，截止时间
-def get_homework(sid):
+def get_homework(sid, page: int, size: int):
     db = get_db()
     cursor = db.cursor(dictionary=True)
     sql = (
@@ -382,11 +382,17 @@ def get_homework(sid):
         "AND student_section.sec_id = section.sec_id "
         "AND course.cid = section.cid "
         "AND homework.sec_id = section.sec_id "
+
     )
+    # 先获取总数
     cursor.execute(sql, (sid, ))
+    num = cursor.fetchall()
+    # 分页
+    sql += f"limit %s offset %s"
+    cursor.execute(sql, (sid, size, page*size))
     courses = cursor.fetchall()
     cursor.close()
-    return courses
+    return courses, len(num)
 
 # 获取某个课程的学生列表，返回学生的id，姓名
 def get_course_students(tid, cid, page: int, size: int, filters: dict):
@@ -777,5 +783,13 @@ def new_course(data:dict):
         "INSERT INTO course(cid, course_name, did, credit) VALUES(%s, %s, %s, %s)"
     )
     cursor.execute(sql, (data['cid'], data['course_name'], data['did'], data['credit']))
+    db.commit()
+    cursor.close()
+
+# 修改密码
+def change_password(account_id, password):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("UPDATE account SET password = %s WHERE account_id = %s", (password, account_id))
     db.commit()
     cursor.close()
