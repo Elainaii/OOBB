@@ -148,6 +148,11 @@ class AdminController:
         self.teacher_curr_page = 0
         self.teacher_total_page = 0
 
+        self.admin_list = list()
+        self.admin_total_size = -1
+        self.admin_curr_page = 0
+        self.admin_total_page = 0
+
         self.account.get_semester_list()
         self.account.get_dept_list()
         self.account.get_major_list()
@@ -184,32 +189,34 @@ class AdminController:
             return False,"已经是第一页了"
 
     def get_teacher_list(self):
-        if self.teacher_total_size == -1:
-            try:
-                r = requests.get(Config.API_BASE_URL + f"/admin/teachers?size=12&page={self.teacher_curr_page}", timeout=2)
-                r.raise_for_status()
-            except requests.exceptions.Timeout:
-                return False,"连接超时"
-            except requests.exceptions.RequestException as e:
-                return False,f"An error occurred: {e}"
-
-            if r.json()['code'] == 0:
-                self.teacher_list = r.json()['data']
-                return True,"Get teacher list success."
-            else:
-                return False,r.json()['message']
+        try:
+            r = requests.get(Config.API_BASE_URL + f"/admin/teachers?size=12&page={self.teacher_curr_page}", timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+        if r.json()['code'] == 0:
+            self.teacher_list = r.json()['data']
+            self.teacher_total_size = r.json()['total_num']
+            self.teacher_total_page = self.teacher_total_size // self.page_size + 1
+            return True,"Get teacher list success."
+        else:
+            return False,r.json()['message']
 
     def teacher_next_page(self):
         if self.teacher_curr_page + 1 < self.teacher_total_page:
             self.teacher_curr_page += 1
-            return self.get_teacher_list()
+            self.get_teacher_list()
+            return True,'Get teacher list success.'
         else:
             return False,"已经是最后一页了"
 
     def teacher_prev_page(self):
         if self.teacher_curr_page - 1 >= 0:
             self.teacher_curr_page -= 1
-            return self.get_teacher_list()
+            self.get_teacher_list()
+            return True,'Get teacher list success.'
         else:
             return False,"已经是第一页了"
 
@@ -240,6 +247,139 @@ class AdminController:
         if r.json()['code'] == 0:
             self.get_student_list()
             return True,"Change student info success."
+        else:
+            return False,r.json()['message']
+
+    def add_teacher(self,data):
+        try:
+            r = requests.post(Config.API_BASE_URL + "/admin/teacher/add", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            return True,"Add teacher success."
+        else:
+            return False,r.json()['message']
+
+    def change_teacher_info(self,data):
+        try:
+            r = requests.post(Config.API_BASE_URL + "/admin/teacher/change", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            self.get_teacher_list()
+            return True,"Change teacher info success."
+        else:
+            return False,r.json()['message']
+
+    def add_admin(self,data):
+        try:
+            r = requests.post(Config.API_BASE_URL + "/admin/admin/add", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            return True,"Add admin success."
+        else:
+            return False,r.json()['message']
+
+
+    def get_admin_list(self):
+        try:
+            r = requests.get(Config.API_BASE_URL + f"/admin/admins?size=12&page={self.admin_curr_page}", timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+        if r.json()['code'] == 0:
+            self.admin_list = r.json()['data']
+            self.admin_total_size = r.json()['total_num']
+            self.admin_total_page = self.admin_total_size // self.page_size + 1
+            return True,"Get admin list success."
+        else:
+            return False,r.json()['message']
+
+    def admin_next_page(self):
+        if self.admin_curr_page + 1 < self.admin_total_page:
+            self.admin_curr_page += 1
+            self.get_admin_list()
+            return True,'Get admin list success.'
+        else:
+            return False,"已经是最后一页了"
+
+    def admin_prev_page(self):
+        if self.admin_curr_page - 1 >= 0:
+            self.admin_curr_page -= 1
+            self.get_admin_list()
+            return True,'Get admin list success.'
+        else:
+            return False,"已经是第一页了"
+
+    def change_admin_info(self,data):
+        try:
+            r = requests.post(Config.API_BASE_URL + "/admin/admin/change", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            self.get_admin_list()
+            return True,"Change admin info success."
+        else:
+            return False,r.json()['message']
+
+    def change_password(self,data):
+        try:
+            r = requests.post(Config.API_BASE_URL + "/account/change_password", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            return True,"Change password success."
+        else:
+            return False,r.json()['message']
+
+    def add_department(self,data):
+        try:
+            r = requests.post(Config.API_BASE_URL + "/admin/department/add", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            return True,"Add department success."
+        else:
+            return False,r.json()['message']
+
+    def change_department(self,data):
+        try:
+            r = requests.post(Config.API_BASE_URL + "/admin/department/change", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            return True,"Change department success."
         else:
             return False,r.json()['message']
 

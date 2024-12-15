@@ -43,66 +43,37 @@ class ChangePasswordMessageBox(MessageBoxBase):
         self.widget.setMinimumWidth(350)
 
 
-class AddStudentMessageBox(MessageBoxBase):
+class AddAdminMessageBox(MessageBoxBase):
     """ Custom message box """
-    '''data['sid'], data['student_name'], data['did'], data['sex'], data['birthday'], data['ID_number'], data['Email'], data['mid']'''
+    '''data['manager_id'], data['manager_name'], data['Email']'''
     def __init__(self, controller:AdminController,parent=None):
         super().__init__(parent)
         self.controller = controller
 
-        self.titleLabel = SubtitleLabel('添加学生')
-        self.sidLineEdit = LineEdit()
+        self.titleLabel = SubtitleLabel('添加管理员')
+        self.idLineEdit = LineEdit()
         self.nameLineEdit = LineEdit()
-        self.didEdit = ComboBox()
-        self.w = QWidget()
-        self.manRadioButton = RadioButton('男')
-        self.womanRadioButton = RadioButton('女')
-        self.buttonGroup = QButtonGroup(self.w)
-        self.buttonGroup.addButton(self.manRadioButton)
-        self.buttonGroup.addButton(self.womanRadioButton)
-        self.sexLayout = QHBoxLayout()
-        self.sexLayout.addWidget(self.manRadioButton)
-        self.sexLayout.addWidget(self.womanRadioButton)
-        self.sexLineEdit = RadioButton()
-        self.birthEdit = DatePicker()
-        self.midEdit = ComboBox()
         self.EmailLineEdit = LineEdit()
-        self.IDnumberLineEdit = LineEdit()
 
-        self.sidLineEdit.setPlaceholderText('输入学号')
-        self.sidLineEdit.setClearButtonEnabled(True)
+        self.idLineEdit.setPlaceholderText('输入ID')
+        self.idLineEdit.setClearButtonEnabled(True)
         self.nameLineEdit.setPlaceholderText('输入姓名')
         self.nameLineEdit.setClearButtonEnabled(True)
-        self.didEdit.setPlaceholderText('选择院系')
-        self.midEdit.setPlaceholderText('选择专业')
         self.EmailLineEdit.setPlaceholderText('输入邮箱')
         self.EmailLineEdit.setClearButtonEnabled(True)
-        self.IDnumberLineEdit.setPlaceholderText('输入身份证号')
-
-        #添加院系，专业
-        for i in self.controller.account.dept_list:
-            self.didEdit.addItem(i['dept_name'])
-        for i in self.controller.account.major_list:
-            self.midEdit.addItem(i['major_name'])
-
 
         # 将组件添加到布局中
         self.viewLayout.addWidget(self.titleLabel)
-        self.viewLayout.addWidget(self.sidLineEdit)
+        self.viewLayout.addWidget(self.idLineEdit)
         self.viewLayout.addWidget(self.nameLineEdit)
-        self.viewLayout.addWidget(self.didEdit)
-        self.viewLayout.addLayout(self.sexLayout)
-        self.viewLayout.addWidget(self.birthEdit)
-        self.viewLayout.addWidget(self.midEdit)
         self.viewLayout.addWidget(self.EmailLineEdit)
-        self.viewLayout.addWidget(self.IDnumberLineEdit)
 
 
         # 设置对话框的最小宽度
         self.widget.setMinimumWidth(350)
 
 
-class ChangeStudentInfoMessageBox(MessageBoxBase):
+class ChangeAdminInfoMessageBox(MessageBoxBase):
     """ Custom message box """
     '''data['sid'], data['student_name'], data['did'], data['sex'], data['birthday'], data['ID_number'], data['Email'], data['mid']'''
     def __init__(self, controller:AdminController,parent=None):
@@ -110,76 +81,44 @@ class ChangeStudentInfoMessageBox(MessageBoxBase):
         self.controller = controller
 
         self.titleLabel = SubtitleLabel('修改信息')
-        self.sidLineEdit = LineEdit()
+        self.idLineEdit = LineEdit()
         self.nameLineEdit = LineEdit()
-        self.didEdit = ComboBox()
-        self.w = QWidget()
-        self.manRadioButton = RadioButton('男')
-        self.womanRadioButton = RadioButton('女')
-        self.buttonGroup = QButtonGroup(self.w)
-        self.buttonGroup.addButton(self.manRadioButton)
-        self.buttonGroup.addButton(self.womanRadioButton)
-        self.sexLayout = QHBoxLayout()
-        self.sexLayout.addWidget(self.manRadioButton)
-        self.sexLayout.addWidget(self.womanRadioButton)
-        self.sexLineEdit = RadioButton()
-        self.birthEdit = DatePicker()
-        self.midEdit = ComboBox()
         self.EmailLineEdit = LineEdit()
-        self.IDnumberLineEdit = LineEdit()
 
-        self.sidLineEdit.setPlaceholderText('输入学号')
-        self.sidLineEdit.setClearButtonEnabled(True)
+        self.idLineEdit.setPlaceholderText('输入ID')
+        self.idLineEdit.setClearButtonEnabled(True)
         self.nameLineEdit.setPlaceholderText('输入姓名')
         self.nameLineEdit.setClearButtonEnabled(True)
-        self.didEdit.setPlaceholderText('选择院系')
-        self.midEdit.setPlaceholderText('选择专业')
         self.EmailLineEdit.setPlaceholderText('输入邮箱')
         self.EmailLineEdit.setClearButtonEnabled(True)
-        self.IDnumberLineEdit.setPlaceholderText('输入身份证号')
-
-        #添加院系，专业
-        for i in self.controller.account.dept_list:
-            self.didEdit.addItem(i['dept_name'])
-        for i in self.controller.account.major_list:
-            self.midEdit.addItem(i['major_name'])
 
 
         # 将组件添加到布局中
         self.viewLayout.addWidget(self.titleLabel)
-        self.viewLayout.addWidget(self.sidLineEdit)
+        self.viewLayout.addWidget(self.idLineEdit)
         self.viewLayout.addWidget(self.nameLineEdit)
-        self.viewLayout.addWidget(self.didEdit)
-        self.viewLayout.addLayout(self.sexLayout)
-        self.viewLayout.addWidget(self.birthEdit)
-        self.viewLayout.addWidget(self.midEdit)
         self.viewLayout.addWidget(self.EmailLineEdit)
-        self.viewLayout.addWidget(self.IDnumberLineEdit)
+
 
 
         # 设置对话框的最小宽度
         self.widget.setMinimumWidth(350)
 
-class StudentTableView(TableView):
+class AdminTableView(TableView):
     def __init__(self,controller:AdminController,parent = None):
         super().__init__(parent)
         self.controller = controller
-        controller.get_student_list()
-        self.data = controller.student_list
+        controller.get_admin_list()
+        self.data = controller.admin_list
 
         self.model = QStandardItemModel()
         for i, row in enumerate(self.data):
-            self.model.setItem(i, 0, QStandardItem(str(row['sid'])))
-            self.model.setItem(i, 1, QStandardItem(row['student_name']))
-            self.model.setItem(i, 2, QStandardItem(row['sex']))
-            self.model.setItem(i, 3, QStandardItem(row['dept_name']))
-            self.model.setItem(i, 4, QStandardItem(row['major_name']))
-            self.model.setItem(i, 5, QStandardItem(row['birthday']))
-            self.model.setItem(i, 6, QStandardItem(row['ID_number']))
-            self.model.setItem(i, 7, QStandardItem(row['Email']))
+            self.model.setItem(i, 0, QStandardItem(str(row['manager_id'])))
+            self.model.setItem(i, 1, QStandardItem(row['manager_name']))
+            self.model.setItem(i, 2, QStandardItem(row['Email']))
 
 
-        self.model.setHorizontalHeaderLabels(['id','姓名', '性别','部门', '专业', '生日','身份证','Email'])
+        self.model.setHorizontalHeaderLabels(['id','姓名', 'Email'])
 
         self.agentModel = QSortFilterProxyModel()
         self.agentModel.setSourceModel(self.model)
@@ -198,17 +137,12 @@ class StudentTableView(TableView):
 
 
     def reset(self):
-        self.data = self.controller.student_list
+        self.data = self.controller.admin_list
         self.model.removeRows(0, self.model.rowCount())
         for i, row in enumerate(self.data):
-            self.model.setItem(i, 0, QStandardItem(str(row['sid'])))
-            self.model.setItem(i, 1, QStandardItem(row['student_name']))
-            self.model.setItem(i, 2, QStandardItem(row['sex']))
-            self.model.setItem(i, 3, QStandardItem(row['dept_name']))
-            self.model.setItem(i, 4, QStandardItem(row['major_name']))
-            self.model.setItem(i, 5, QStandardItem(row['birthday']))
-            self.model.setItem(i, 6, QStandardItem(row['ID_number']))
-            self.model.setItem(i, 7, QStandardItem(row['Email']))
+            self.model.setItem(i, 0, QStandardItem(str(row['manager_id'])))
+            self.model.setItem(i, 1, QStandardItem(row['manager_name']))
+            self.model.setItem(i, 2, QStandardItem(row['Email']))
         self.agentModel.setSourceModel(self.model)
 
     def show_rightmenu(self,pos):
@@ -235,16 +169,16 @@ class StudentTableView(TableView):
 
     def changePassword(self):
         self.changePasswordBox = ChangePasswordMessageBox(self.controller,self.parent())
-        self.changePasswordBox.nameEdit.setText(self.data[self.currentIndex().row()]['student_name'])
-        self.changePasswordBox.idEdit.setText(str(self.data[self.currentIndex().row()]['sid']))
+        self.changePasswordBox.nameEdit.setText(self.data[self.currentIndex().row()]['admin_name'])
+        self.changePasswordBox.idEdit.setText(str(self.data[self.currentIndex().row()]['manager_id']))
 
         while self.changePasswordBox.exec():
             name = self.changePasswordBox.nameEdit.text()
-            sid = self.changePasswordBox.idEdit.text()
+            id = self.changePasswordBox.idEdit.text()
             oldPassword = self.changePasswordBox.oldPasswordEdit.text()
             newPassword = self.changePasswordBox.newPasswordEdit.text()
             confirmPassword = self.changePasswordBox.confirmPasswordEdit.text()
-            if name == '' or sid == '' or oldPassword == '' or newPassword == '' or confirmPassword == '':
+            if name == '' or id == '' or oldPassword == '' or newPassword == '' or confirmPassword == '':
                 InfoBar.error(
                     title='错误',
                     content="请填写完整内容",
@@ -256,7 +190,7 @@ class StudentTableView(TableView):
                 )
             else:
                 data = {
-                    'id':sid,
+                    'manager_id':id,
                     'old_password':oldPassword,
                     'new_password':newPassword,
                 }
@@ -284,24 +218,16 @@ class StudentTableView(TableView):
                     )
 
     def changeInfo(self):
-        self.changeInfoBox = ChangeStudentInfoMessageBox(self.controller,self.parent())
-        self.changeInfoBox.sidLineEdit.setText(str(self.data[self.currentIndex().row()]['sid']))
-        self.changeInfoBox.nameLineEdit.setText(self.data[self.currentIndex().row()]['student_name'])
-        self.changeInfoBox.didEdit.setCurrentText(self.data[self.currentIndex().row()]['dept_name'])
-        self.changeInfoBox.midEdit.setCurrentText(self.data[self.currentIndex().row()]['major_name'])
+        self.changeInfoBox = ChangeAdminInfoMessageBox(self.controller,self.parent())
+        self.changeInfoBox.idLineEdit.setText(str(self.data[self.currentIndex().row()]['manager_id']))
+        self.changeInfoBox.nameLineEdit.setText(self.data[self.currentIndex().row()]['manager_name'])
         self.changeInfoBox.EmailLineEdit.setText(self.data[self.currentIndex().row()]['Email'])
-        self.changeInfoBox.IDnumberLineEdit.setText(self.data[self.currentIndex().row()]['ID_number'])
         while self.changeInfoBox.exec():
             name = self.changeInfoBox.nameLineEdit.text()
-            sid = self.changeInfoBox.sidLineEdit.text()
-            did = self.controller.account.dept_list[self.changeInfoBox.didEdit.currentIndex()]['did']
-            sex = self.changeInfoBox.buttonGroup.checkedButton()
-            birth = self.changeInfoBox.birthEdit.date.toString("yyyy-MM-dd")
-            mid = self.controller.account.major_list[self.changeInfoBox.midEdit.currentIndex()]['mid']
+            id = self.changeInfoBox.idLineEdit.text()
             email = self.changeInfoBox.EmailLineEdit.text()
-            id_number = self.changeInfoBox.IDnumberLineEdit.text()
 
-            if name == '' or sid == '' or did == -1 or mid == -1 or email == '' or birth == '' or sex is None or id_number == '':
+            if name == '' or id == ''  or email == '' :
                 InfoBar.error(
                     title='错误',
                     content="请填写完整内容",
@@ -313,20 +239,11 @@ class StudentTableView(TableView):
                 )
             else:
                 data = {
-                    'sid':sid,
-                    'student_name':name,
-                    'did':did,
-                    'mid':mid,
+                    'manager_id':id,
+                    'manager_name':name,
                     'Email':email,
-                    'sex':sex.text(),
-                    'birthday':birth,
-                    'ID_number':id_number
                 }
-                if data['sex'] == '男':
-                    data['sex'] = 'M'
-                else:
-                    data['sex'] = 'F'
-                status,msg = self.controller.change_student_info(data)
+                status,msg = self.controller.change_admin_info(data)
                 if status:
                     InfoBar.success(
                         title='成功',
@@ -352,14 +269,14 @@ class StudentTableView(TableView):
 
 
 
-class StudentCommandBar(CommandBar):
+class AdminCommandBar(CommandBar):
     def __init__(self,controller :AdminController,parent = None):
         super().__init__(parent)
 
         self.pageSignal = Signal(int)
         self.controller = controller
 
-        self.add = Action(FluentIcon.ADD, "添加", self,triggered = self.addStudent)
+        self.add = Action(FluentIcon.ADD, "添加", self,triggered = self.addAdmin)
         self.copy = Action(FluentIcon.COPY, "", self)
         self.share = Action(FluentIcon.SHARE, "", self)
         self.addAction(self.add)
@@ -392,20 +309,15 @@ class StudentCommandBar(CommandBar):
 
 
 
-    def addStudent(self):
+    def addAdmin(self):
         print("添加学生")
-        self.addStudentMessageBox = AddStudentMessageBox(self.controller,self.parent())
+        self.addStudentMessageBox = AddAdminMessageBox(self.controller,self.parent())
         while self.addStudentMessageBox.exec():
             name = self.addStudentMessageBox.nameLineEdit.text()
-            sid = self.addStudentMessageBox.sidLineEdit.text()
-            did = self.controller.account.dept_list[self.addStudentMessageBox.didEdit.currentIndex()]['did']
-            sex = self.addStudentMessageBox.buttonGroup.checkedButton()
-            birth = self.addStudentMessageBox.birthEdit.date.toString("yyyy-MM-dd")
-            mid = self.controller.account.major_list[self.addStudentMessageBox.midEdit.currentIndex()]['mid']
+            id = self.addStudentMessageBox.idLineEdit.text()
             email = self.addStudentMessageBox.EmailLineEdit.text()
-            id_number = self.addStudentMessageBox.IDnumberLineEdit.text()
 
-            if name == '' or sid == '' or did == -1 or mid == -1 or email == '' or birth == '' or sex is None or id_number == '':
+            if name == '' or id == '' or email == '' :
                 InfoBar.error(
                     title='错误',
                     content="请填写完整内容",
@@ -417,20 +329,11 @@ class StudentCommandBar(CommandBar):
                 )
             else:
                 data = {
-                    'sid':sid,
-                    'student_name':name,
-                    'did':did,
-                    'mid':mid,
+                    'manager_id':id,
+                    'manager_name':name,
                     'Email':email,
-                    'sex':sex.text(),
-                    'birthday':birth,
-                    'ID_number':id_number
                 }
-                if data['sex'] == '男':
-                    data['sex'] = 'M'
-                else:
-                    data['sex'] = 'F'
-                status,msg = self.controller.add_student(data)
+                status,msg = self.controller.add_admin(data)
                 if status:
                     InfoBar.success(
                         title='成功',
@@ -454,7 +357,7 @@ class StudentCommandBar(CommandBar):
                     )
 
 
-class StudentInterface(ScrollArea):
+class AdminInterface(ScrollArea):
 
     def __init__(self, controller:AdminController,parent=None):
         super().__init__(parent)
@@ -463,14 +366,14 @@ class StudentInterface(ScrollArea):
 
         self.vBoxLayout = QVBoxLayout(self.view)
 
-        self.commandBar = StudentCommandBar(controller,self.view)
-        self.table = StudentTableView(controller,self)
+        self.commandBar = AdminCommandBar(controller,self.view)
+        self.table = AdminTableView(controller,self)
         self.commandBar.up.triggered.connect(self.prev_page)
         self.commandBar.down.triggered.connect(self.next_page)
         self.commandBar.pageEdit.textEdited.connect(self.change_page)
 
         self.commandBar.search.textEdited.connect(lambda str1: self.table.agentModel.setFilterRegularExpression(str1))
-        self.commandBar.pageLabel2.setText("页,共" + str(self.controller.student_total_page) + "页")
+        self.commandBar.pageLabel2.setText("页,共" + str(self.controller.admin_total_page) + "页")
 
         self.setWidget(self.view)
         self.setWidgetResizable(True)
@@ -486,10 +389,10 @@ class StudentInterface(ScrollArea):
         self.enableTransparentBackground()
 
     def prev_page(self):
-        status, msg = self.controller.student_prev_page()
+        status, msg = self.controller.admin_prev_page()
         if status:
             self.table.reset()
-            self.commandBar.pageEdit.setText(str(self.controller.student_curr_page))
+            self.commandBar.pageEdit.setText(str(self.controller.admin_curr_page))
         else:
             InfoBar.error(
                 title='错误',
@@ -503,10 +406,10 @@ class StudentInterface(ScrollArea):
         return
 
     def next_page(self):
-        status, msg = self.controller.student_next_page()
+        status, msg = self.controller.admin_next_page()
         if status:
             self.table.reset()
-            self.commandBar.pageEdit.setText(str(self.controller.student_curr_page))
+            self.commandBar.pageEdit.setText(str(self.controller.admin_curr_page))
 
         else:
             InfoBar.error(
@@ -524,7 +427,7 @@ class StudentInterface(ScrollArea):
         if self.commandBar.pageEdit.text() == '':
             return
         page_number = int(self.commandBar.pageEdit.text())
-        if page_number<0 or page_number>self.controller.student_total_page-1:
+        if page_number<0 or page_number>self.controller.admin_total_page-1:
             InfoBar.error(
                 title='错误',
                 content="页数超出范围",
@@ -535,8 +438,8 @@ class StudentInterface(ScrollArea):
                 parent=self
             )
             return
-        self.controller.student_curr_page = page_number
-        self.controller.get_student_list()
+        self.controller.admin_curr_page = page_number
+        self.controller.get_admin_list()
         self.table.reset()
         return
 

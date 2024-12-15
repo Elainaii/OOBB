@@ -1,15 +1,8 @@
-from PySide6.QtGui import QIcon, QStandardItem, QStandardItemModel, QActionGroup
-from PySide6.QtCore import Qt, QSortFilterProxyModel,QAbstractItemModel
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QAbstractItemView,QSizePolicy,QTableView,QHeaderView
+from qfluentwidgets import setThemeColor
 
-from qfluentwidgets import ScrollArea, MSFluentWindow, FluentIcon, NavigationItemPosition, CommandBar, Action, \
-    SearchLineEdit, TableView, CaptionLabel, LineEdit, TransparentDropDownPushButton, setFont, RoundMenu, \
-    TogglePushButton, CheckableMenu, MenuIndicatorType, ElevatedCardWidget, setThemeColor
-
-from src.client.core.account import Account
 from src.client.student.award_interface import AwardInterface
 from src.client.student.home_interface import *
-from src.client.student.account_interface import AccountInterface
+from src.client.public.account_interface import AccountInterface
 from src.client.student.homework_interface import HomeworkInterface
 from src.client.student.mycourse_interface import *
 from src.client.student.selectcourse_interface import SelectCourseInterface
