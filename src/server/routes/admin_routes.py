@@ -136,6 +136,19 @@ def add_department():
         return jsonify({'code': -1, 'message': str(e)})
     return jsonify({'code': 0, 'message': 'success','data':data})
 
+# 修改院系名字
+@admin_bp.route('/admin/department/change', methods=['POST'])
+def change_department():
+    # 提交院系id，修改后的院系名字
+    data = request.json
+    try:
+        services.change_department(data)
+    except myException as e:
+        return jsonify({'code': -1, 'message': str(e)})
+    except Exception as e:
+        return jsonify({'code': -1, 'message': str(e)})
+    return jsonify({'code': 0, 'message': 'success','data':data})
+
 # 添加一个新学期
 @admin_bp.route('/admin/semester/add', methods=['POST'])
 def add_semester():

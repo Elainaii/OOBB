@@ -793,3 +793,17 @@ def change_password(account_id, password):
     cursor.execute("UPDATE account SET password = %s WHERE account_id = %s", (password, account_id))
     db.commit()
     cursor.close()
+
+# 修改院系名字
+def change_department(data: dict):
+    db = get_db()
+    cursor = db.cursor()
+    # 检查院系是否存在
+    cursor.execute("SELECT did FROM department WHERE did = %s", (data['did'],))
+    did = cursor.fetchone()
+    if not did:
+        raise myException('Department id does not exist.')
+    # 修改院系名字
+    cursor.execute("UPDATE department SET dept_name = %s WHERE did = %s", (data['dept_name'], data['did']))
+    db.commit()
+    cursor.close()
