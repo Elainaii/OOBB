@@ -1,5 +1,7 @@
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt
+
+
 from src.client.login.login_window import LoginWindow
 from src.client.core.account import Account
 

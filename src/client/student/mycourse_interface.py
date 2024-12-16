@@ -6,28 +6,33 @@ from qfluentwidgets import ScrollArea, MSFluentWindow, FluentIcon, NavigationIte
     SearchLineEdit, TableView, CaptionLabel, LineEdit, TransparentDropDownPushButton, setFont, RoundMenu, \
     TogglePushButton, CheckableMenu, MenuIndicatorType, ElevatedCardWidget
 
-from src.client.core.account import Account
+from src.client.core.account import Account,StudentController
 
-class MyCourseController():
-    def __init__(self,account:Account):
-        data = account.get_my_course()
-        #TODO
+
 
 
 class MyCourseTableView(TableView):
-    def __init__(self,parent = None):
+    def __init__(self,controller:StudentController,parent = None):
         super().__init__(parent)
-        from faker import Faker
-        fake = Faker(locale='zh-CN')
 
-        data = [[fake.name(), fake.address(), fake.ascii_free_email(), fake.phone_number()] for
-                _ in range(50)]
+        controller.set_my_course_filter(controller.account.curr_semester,'0','')
+        controller.init_course_list()
+        data = controller.course_list
 
         model = QStandardItemModel()
         for i, row in enumerate(data):
-            for j, item in enumerate(row):
-                model.setItem(i, j, QStandardItem(item))
-        model.setHorizontalHeaderLabels(['课程id','名称', '上课地址', '教师', '开始周数','结束周数','学分','成绩'])
+            model.setItem(i, 0, QStandardItem(str(row['course_id'])))
+            model.setItem(i, 1, QStandardItem(row['course_name']))
+            model.setItem(i, 2, QStandardItem(row['building_name'] +" "+ str(row['room_number'])))
+            model.setItem(i, 3, QStandardItem(row['teacher_name']))
+            model.setItem(i, 4, QStandardItem(str(row['start_week'])))
+            model.setItem(i, 5, QStandardItem(str(row['end_week'])))
+            model.setItem(i, 6, QStandardItem(str(row['course_credit'])))
+            model.setItem(i, 7, QStandardItem(str('周' + str(row['course_day']) +' '+ str(row['course_start_time']) + "-" + str(row['course_end_time']))))
+            #model.setItem(i, 7, QStandardItem(str(row['grade'])))
+
+
+        model.setHorizontalHeaderLabels(['课程id','名称', '上课地址', '教师', '开始周数','结束周数','学分','时间','成绩'])
 
         self.agentModel = QSortFilterProxyModel()
         self.agentModel.setSourceModel(model)
@@ -42,9 +47,9 @@ class MyCourseTableView(TableView):
 
 
 class MyCourseFilterMenu(TransparentDropDownPushButton):
-    def __init__(self,str,Icon):
+    def __init__(self,text,Icon,controller:StudentController):
         super().__init__()
-        self.setText(str)
+        self.setText(text)
         self.setIcon(Icon)
         setFont(self, 12)
         menu = RoundMenu(parent=self)
@@ -66,6 +71,12 @@ class MyCourseFilterMenu(TransparentDropDownPushButton):
 
         # 这里请求学期列表，
         self.submenu2 = CheckableMenu('学期', indicatorType=MenuIndicatorType.RADIO)
+        self.actionList = []
+        for i,semester in enumerate(controller.account.semester_list):
+            self.actionList.append(Action(FluentIcon.CALENDAR, str(semester['year']) + str(semester['season']),checkable=True))
+            self.submenu2.addAction(self.actionList[i])
+
+
 
         menu.addMenu(self.submenu1)
         menu.addMenu(self.submenu2)
@@ -74,7 +85,7 @@ class MyCourseFilterMenu(TransparentDropDownPushButton):
 
 
 class MyCousreCommandBar(CommandBar):
-    def __init__(self,parent = None):
+    def __init__(self,controller:StudentController,parent = None):
         super().__init__(parent)
         self.addAction(Action(FluentIcon.SYNC, "", self))
         self.addAction(Action(FluentIcon.COPY, "", self))
@@ -95,7 +106,7 @@ class MyCousreCommandBar(CommandBar):
         self.addWidget(self.pageLabel2)
         self.addSeparator()
 
-        self.filterMenu = MyCourseFilterMenu('过滤',FluentIcon.FILTER)
+        self.filterMenu = MyCourseFilterMenu('过滤',FluentIcon.FILTER,controller)
         self.addWidget(self.filterMenu)
 
         # self.addSeparator()
@@ -107,17 +118,18 @@ class MyCousreCommandBar(CommandBar):
 
 class MyCourseInterface(ScrollArea):
 
-    def __init__(self, parent=None):
+    def __init__(self,controller ,parent=None):
         super().__init__(parent)
 
         self.view = QWidget(self)
+        self.controller = controller
 
         self.vBoxLayout = QVBoxLayout(self.view)
 
-        self.commandBar = MyCousreCommandBar(self.view)
-        self.table = MyCourseTableView(self)
+        self.commandBar = MyCousreCommandBar(self.controller,self.view)
+        self.table = MyCourseTableView(self.controller,self)
 
-        self.commandBar.search.textEdited.connect(lambda str1: self.table.agentModel.setFilterRegularExpression(str1))
+
 
         self.setWidget(self.view)
         self.setWidgetResizable(True)

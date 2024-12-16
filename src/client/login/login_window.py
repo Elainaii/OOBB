@@ -7,8 +7,11 @@ from qfluentwidgets import setThemeColor, FluentTranslator, setTheme, Theme, Spl
     InfoBarPosition, InfoBar
 from src.client.login.ui_LoginWindow import Ui_Form
 from src.client.student.student_main_window import *
+from src.client.teacher.teacher_main_window import *
+from src.client.admin.admin_main_window import *
 
 from src.client.core.account import *
+
 
 
 def isWin11():
@@ -23,8 +26,12 @@ else:
 
 def show_main_window(account: Account, mainWindow=None):
     if account.identity == 'A':
+        mainWindow = AdminMainWindow(account)
+        mainWindow.show()
         print("Admin")  # 这里之后改成展示界面
     elif account.identity == 'T':
+        mainWindow = TeacherMainWindow(account)
+        mainWindow.show()
         print("Teacher")
     else:
         mainWindow = StudentMainWindow(account)
@@ -37,9 +44,10 @@ class LoginWindow(Window, Ui_Form):
     def __init__(self,account_:Account,mainWindow):
         super().__init__()
         self.mainWindow = mainWindow
+        setThemeColor('#f18cb9')
         self.setupUi(self)
         # setTheme(Theme.DARK)
-        setThemeColor('#28afe9')
+        #setThemeColor('#28afe9')
 
         self.setTitleBar(SplitTitleBar(self))
         self.titleBar.raise_()

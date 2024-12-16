@@ -25,7 +25,7 @@ def get_student_num():
 def get_students(page: int, size: int):
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute(f"SELECT * FROM student limit {size} offset {page*size}")
+    cursor.execute(f"SELECT * FROM student NATURAL JOIN department NATURAL JOIN major limit {size} offset {page*size}")
     courses = cursor.fetchall()
     cursor.close()
     return courses
@@ -42,7 +42,7 @@ def get_teacher_num():
 def get_teachers(page: int, size: int):
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute(f"SELECT * FROM teacher limit {size} offset {page*size}")
+    cursor.execute(f"SELECT * FROM teacher NATURAL JOIN department limit {size} offset {page*size}")
     courses = cursor.fetchall()
     cursor.close()
     return courses
@@ -151,6 +151,14 @@ def get_dept():
     db = get_db()
     cursor = db.cursor(dictionary=True)
     cursor.execute("SELECT * FROM department")
+    courses = cursor.fetchall()
+    cursor.close()
+    return courses
+
+def get_major():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM major")
     courses = cursor.fetchall()
     cursor.close()
     return courses

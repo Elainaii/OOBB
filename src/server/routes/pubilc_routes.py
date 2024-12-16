@@ -39,7 +39,7 @@ def change_password():
 @public_bp.route('/departments', methods=['GET'])
 def get_department():
     data = services.get_dept()
-    return create_response(data, message='success', code=0)
+    return jsonify({'code': 0, 'message': 'success', 'data': data})
 
 # 获取所有学期，分页
 @public_bp.route('/semester', methods=['GET'])
@@ -52,3 +52,8 @@ def get_semester():
     page_number = int(page_number)
     data, num = services.get_semester(page_number, page_size)
     return {'code': 0, 'message': 'success','page':page_number,'size':page_size , 'total_num': num ,'data': data}
+
+@public_bp.route('/major', methods=['GET'])
+def fetch_major():
+    data = services.get_major()
+    return jsonify({'code': 0, 'message': 'success', 'data': data})
