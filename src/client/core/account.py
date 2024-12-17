@@ -406,6 +406,12 @@ class TeacherController():
         self.homework_total_page = 0
         self.homework_total_size = -1
 
+        self.all_course_list = list()
+        self.all_course_total_size = -1
+        self.all_course_curr_page = 0
+        self.all_course_total_page = 0
+
+
 
         self.account.get_semester_list()
         self.account.get_dept_list()
@@ -501,4 +507,20 @@ class TeacherController():
             return True,"Change department success."
         else:
             return False,r.json()['message']
+
+    def get_all_course_list(self):
+        try:
+            r = requests.get(Config.API_BASE_URL + f"/teacher/courses/all?size=12&page={self.all_course_curr_page}", timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时",[]
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}",[]
+        if r.json()['code'] == 0:
+            self.all_course_list = r.json()['data']
+            self.all_course_total_size = r.json()['total_num']
+            self.all_course_total_page = self.all_course_total_size // self.page_size + 1
+            return True,"Get course list success."
+        else:
+            return False,r.json()['message'],[]
 

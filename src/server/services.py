@@ -846,3 +846,7 @@ def change_password_admin(data:dict):
     cursor.execute("UPDATE account SET password = %s WHERE id = %s", (data['password'], data['account_id']))
     db.commit()
     cursor.close()
+
+
+def get_all_courses():
+    pass # TODO

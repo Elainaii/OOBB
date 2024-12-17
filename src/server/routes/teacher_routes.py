@@ -154,3 +154,9 @@ def new_course(tid):
     except Exception as e:
         return jsonify({'code': -1, 'message': str(e)})
     return jsonify({'code': 0, 'message': 'success','data':data})
+
+#查看所有课程
+@teacher_bp.route('/teacher/courses', methods=['GET'])
+def get_courses():
+    data = services.get_all_courses()
+    return create_response(data, message='success', code=0)
