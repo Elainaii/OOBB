@@ -6,17 +6,21 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QGraphi
 from PIL import Image
 from qfluentwidgets import FluentIcon, ScrollArea, BodyLabel, GroupHeaderCardWidget
 import numpy as np
-
+from src.client.core.account import *
 
 class InfoCard(GroupHeaderCardWidget):
 
-    def __init__(self, parent=None):
+    def __init__(self, controller, parent=None):
         super().__init__(parent)
         self.setTitle("个人信息")
         self.setBorderRadius(8)
-
-        self.avgScoreLabel = BodyLabel("平均分数", self)
-        self.totalCreditLabel = BodyLabel("总学分", self)
+        controller.init_home()
+        data = controller.home_info
+        # data = controller.home_info
+        # 将数据填充到组件中
+        # 平均分 = data['avg_score']
+        self.avgScoreLabel = BodyLabel(f"平均分数：{data['avg_score']}", self)
+        self.totalCreditLabel = BodyLabel(f"总学分：{data['total_credit']}", self)
         self.totalCourseLabel = BodyLabel("总课程", self)
 
         # 添加组件到分组中
@@ -81,10 +85,10 @@ class BannerWidget(QWidget):
 
 
 class HomeInterface(ScrollArea):
-    def __init__(self, parent=None):
+    def __init__(self, controller, parent=None):
         super().__init__(parent=parent)
         self.banner = BannerWidget(self)
-        self.infoCard = InfoCard(self)
+        self.infoCard = InfoCard(controller, self)
         self.view = QWidget(self)
         self.vBoxLayout = QVBoxLayout(self.view)
 

@@ -165,6 +165,7 @@ def get_major():
 
 # 获取学生信息，包括学号，姓名，性别，年龄，院系，专业
 # 还要返回总学分和平均分（平均分只用算已通过的课程、并且不用加权）
+# 并且统计学生选课的总数
 def get_student_info(sid):
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -271,7 +272,7 @@ def get_my_course_info(sid , page: int, size: int, filters: dict):
 
     # 通过学期号过滤
     f1 = filters.get('semester_id')
-    if f1:
+    if f1 is not None:
         sql += "AND section.semester_id = %s "
         params.append(f1)
     # 通过课程状态过滤
@@ -290,11 +291,11 @@ def get_my_course_info(sid , page: int, size: int, filters: dict):
             sql += "AND student_section.score < 60 "
     # 通过课程名过滤
     f3 = filters.get('course_name')
-    if f3:
-        sql += f"AND course.course_name LIKE %s "
+    if f3 is not None:
+        sql += "AND course.course_name LIKE %s "
         params.append(f"%{f3}%")
     # 先获取总数
-    cursor.execute(sql, (sid, ))
+    cursor.execute(sql, params)
     num = cursor.fetchall()
     # 获取总数
     num = len(num)

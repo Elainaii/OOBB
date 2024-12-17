@@ -83,6 +83,7 @@ class Account:
 class StudentController():
     def __init__(self,account:Account):
         self.account = account
+        self.home_info = dict()
         self.course_list = list()
         self.course_total_size = -1
         self.course_curr_page = 0
@@ -94,10 +95,26 @@ class StudentController():
         self.account.get_semester_list()
         self.account.get_dept_list()
 
+    # 首页的一些信息
+    def init_home(self):
+        try:
+            r = requests.get(Config.API_BASE_URL + f"/student/{self.account.id}/info", timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+        response_json = r.json()
+        if r.json()['code'] == 0:
+            self.home_info = r.json()['data']
+            return True,r.json()['data']
+        else:
+            return False,r.json()['message']
+
     def init_course_list(self,page = 0):
         if self.course_total_size == -1 :
             try:
-                r = requests.get(Config.API_BASE_URL + f"/student/{self.account.id}/courses?semester_id={self.my_course_filter['semester_id']}&status={self.my_course_filter['status']}&course_name={self.my_course_filter['course_name']}&size=12&page={self.course_curr_page}", timeout=2)
+                r = requests.get(Config.API_BASE_URL + f"/student/{self.account.id}/courses?semester_id={self.my_course_filter['semester_id']}&status={self.my_course_filter['status']}&size=12&page={self.course_curr_page}", timeout=2)
                 r.raise_for_status()
             except requests.exceptions.Timeout:
                 return False,"连接超时"

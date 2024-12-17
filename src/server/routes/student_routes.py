@@ -100,4 +100,4 @@ def select_course(sid):
 @student_bp.route('/student/<int:sid>/info', methods=['GET'])
 def get_student_info(sid):
     data = services.get_student_info(sid)
-    return create_response(data, message='success', code=0)
+    return jsonify({'code': 0, 'message': 'success', 'data': data})
