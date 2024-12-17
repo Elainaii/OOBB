@@ -429,10 +429,19 @@ class TeacherController():
         self.all_course_curr_page = 0
         self.all_course_total_page = 0
 
+        self.curr_add_course_id = -1
+
+        self.time_slot_list = list()
+        self.classroom_list = list()
+
+        self.time_classroom_list = list()
+
 
 
         self.account.get_semester_list()
         self.account.get_dept_list()
+        self.get_time_slot_list()
+        self.get_classroom_list()
 
 
     def get_course_list(self):
@@ -528,17 +537,124 @@ class TeacherController():
 
     def get_all_course_list(self):
         try:
-            r = requests.get(Config.API_BASE_URL + f"/teacher/courses/all?size=12&page={self.all_course_curr_page}", timeout=2)
+            r = requests.get(Config.API_BASE_URL + f"/course?size=12&page={self.all_course_curr_page}", timeout=2)
             r.raise_for_status()
         except requests.exceptions.Timeout:
-            return False,"连接超时",[]
+            return False,"连接超时"
         except requests.exceptions.RequestException as e:
-            return False,f"An error occurred: {e}",[]
+            return False,f"An error occurred: {e}"
         if r.json()['code'] == 0:
             self.all_course_list = r.json()['data']
             self.all_course_total_size = r.json()['total_num']
             self.all_course_total_page = self.all_course_total_size // self.page_size + 1
             return True,"Get course list success."
         else:
-            return False,r.json()['message'],[]
+            return False,r.json()['message']
+
+    def get_classroom_list(self):
+        try:
+            r = requests.get(Config.API_BASE_URL + "/classroom?size=10000&page=0", timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+        if r.json()['code'] == 0:
+            self.classroom_list = r.json()['data']
+            return True,"Get classroom list success."
+        else:
+            return False,r.json()['message']
+
+    def get_time_slot_list(self):
+        try:
+            r = requests.get(Config.API_BASE_URL + "/time_slot", timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+        if r.json()['code'] == 0:
+            self.time_slot_list = r.json()['data']
+            return True,"Get time slot list success."
+        else:
+            return False,r.json()['message']
+    def reset_course_time_list(self):
+        self.time_classroom_list = list()
+
+    def add_course_time_list(self,time_slot_id,classroom_id):
+        time_slot_ids = [entry['time_slot_id'] for entry in self.time_classroom_list]
+        if time_slot_id  in time_slot_ids:
+            return False,"Time slot exists."
+        self.time_classroom_list.append({
+            'time_slot_id':time_slot_id,
+            'classroom_id':classroom_id
+        })
+        return True,"Add course time success."
+
+    def del_course_time_list(self, time_slot_id, classroom_id):
+        if {'time_slot_id':time_slot_id,'classroom_id':classroom_id} in self.time_classroom_list:
+            self.time_classroom_list.remove({'time_slot_id':time_slot_id,'classroom_id':classroom_id})
+            return True,"Delete course time success."
+        else:
+            return False,"Course time not exists."
+
+    def submit_course(self):
+        data = {
+            'cid':self.curr_add_course_id,
+            'time_classroom':self.time_classroom_list
+        }
+        try:
+            r = requests.post(Config.API_BASE_URL + f"/teacher/{self.account.id}/courses/add", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            return True,"Submit course success."
+        else:
+            return False,r.json()['message']
+
+    def create_new_course(self, data):
+        try:
+            r = requests.post(Config.API_BASE_URL + "/teacher/courses/new", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            return True,"Create course success."
+        else:
+            return False,r.json()['message']
+
+    def set_homework_grade(self,data):
+        try:
+            r = requests.post(Config.API_BASE_URL + f"/teacher/{self.account.id}/courses/{self.curr_course_id}/homeworks/grade", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            return True,"Set homework grade success."
+        else:
+            return False,r.json()['message']
+
+    def set_course_grade(self,data):
+        try:#/teacher/<int:tid>/courses/<int:sec_id>/student/grade
+            r = requests.post(Config.API_BASE_URL + f"/teacher/{self.account.id}/courses/{self.curr_course_id}/student/grade", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            return True,"Set course grade success."
+        else:
+            return False,r.json()['message']
 

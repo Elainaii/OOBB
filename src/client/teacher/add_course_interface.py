@@ -10,10 +10,141 @@ from qfluentwidgets import (ScrollArea, MSFluentWindow, FluentIcon, NavigationIt
                             RoundMenu, \
                             TogglePushButton, CheckableMenu, MenuIndicatorType, ElevatedCardWidget, MessageBoxBase,
                             SubtitleLabel, DatePicker,
-                            ComboBox, CheckBox, RadioButton, InfoBar, InfoBarPosition, BreadcrumbBar)
+                            ComboBox, CheckBox, RadioButton, InfoBar, InfoBarPosition, BreadcrumbBar, HeaderCardWidget,
+                            GroupHeaderCardWidget, PushButton, IconWidget, InfoBarIcon, PrimaryPushButton, BodyLabel,
+                            PrimaryPushSettingCard)
 
 from src.client.core.account import TeacherController
 
+class AddNewCourseMessageBox(MessageBoxBase):
+    def __init__(self, controller:TeacherController,parent=None):
+        super().__init__(parent)
+        self.controller = controller
+        self.titleLabel = SubtitleLabel('添加课程')
+        self.courseIdLineEdit = LineEdit()
+        self.courseNameLineEdit = LineEdit()
+        self.creditLineEdit = LineEdit()
+        self.courseIdLineEdit.setPlaceholderText("请输入课程号")
+        self.courseNameLineEdit.setPlaceholderText("请输入课程名称")
+        self.departmentComboBox = ComboBox()
+        for dept in controller.account.dept_list:
+            self.departmentComboBox.addItem(dept['dept_name'])
+        self.creditLineEdit.setPlaceholderText("请输入学分")
+        self.viewLayout.addWidget(self.titleLabel)
+        self.viewLayout.addWidget(self.courseIdLineEdit)
+        self.viewLayout.addWidget(self.departmentComboBox)
+        self.viewLayout.addWidget(self.courseNameLineEdit)
+        self.viewLayout.addWidget(self.creditLineEdit)
+        self.widget.setMinimumWidth(350)
+
+class AddCourseInfoCard(GroupHeaderCardWidget):
+
+    def __init__(self, controller:TeacherController, parent=None):
+        super().__init__(parent)
+        self.setTitle("课程信息")
+        self.controller = controller
+        self.setBorderRadius(8)
+        self.setFixedHeight(250)
+        # data = controller.home_info
+        # 将数据填充到组件中
+        # 平均分 = data['avg_score']
+
+        self.courseIdLabel = BodyLabel(f"课程ID：", self)
+        self.creditLabel = BodyLabel(f"学分：", self)
+        self.semesterLabel = BodyLabel(f"开课学期：", self)
+
+        # 添加组件到分组中
+        self.addGroup(FluentIcon.DICTIONARY,"课程ID","",self.courseIdLabel)
+        self.addGroup(FluentIcon.CERTIFICATE,"学分","",self.creditLabel)
+        self.addGroup(FluentIcon.CERTIFICATE,"开课学期","",self.semesterLabel)
+
+    def updateInfo(self):
+        courseId = self.controller.curr_add_course_id
+        credit = 0
+        for course in self.controller.all_course_list:
+            if course['cid'] == courseId:
+                credit = course['credit']
+                break
+        semester = str(self.controller.account.semester_list[0]['year']) + self.controller.account.semester_list[0]['season']
+        self.courseIdLabel.setText(f"课程ID：{courseId}")
+        self.creditLabel.setText(f"学分：{credit}")
+        self.semesterLabel.setText(f"开课学期：{semester}")
+
+class AddClassTimeMessageBox(MessageBoxBase):
+    def __init__(self, controller:TeacherController,parent=None):
+        super().__init__(parent)
+        self.controller = controller
+        self.titleLabel = SubtitleLabel('添加教室-时间信息')
+        self.timeComboBox = ComboBox()
+        self.classroomComboBox = ComboBox()
+
+        for time in controller.time_slot_list:
+            self.timeComboBox.addItem( '周' + str(time['day']) + ' ' + str(time['start_time']) + '-' + str(time['end_time']))
+
+        for room in controller.classroom_list:
+            self.classroomComboBox.addItem(room['building_name'] + ' ' + str(room['room_number']))
+
+        self.viewLayout.addWidget(self.titleLabel)
+        self.viewLayout.addWidget(self.timeComboBox)
+        self.viewLayout.addWidget(self.classroomComboBox)
+
+        self.widget.setMinimumWidth(350)
+
+class AddCourseTableCard(GroupHeaderCardWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setTitle('教室-时间信息')
+        self.setBorderRadius(8)
+        self.setMinimumHeight(300)
+        self.setMaximumHeight(350)
+
+        self.hintIcon = IconWidget(InfoBarIcon.INFORMATION)
+        self.hintLabel = BodyLabel("点击添加按钮 👉")
+        self.addButton = PrimaryPushButton(FluentIcon.ADD, "添加")
+        self.bottomLayout = QHBoxLayout()
+
+        self.table = TableView(self)
+        self.model = QStandardItemModel()
+
+
+
+        self.model.setHorizontalHeaderLabels(['时间', '教室'])
+        self.table.verticalHeader().hide()
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.setModel(self.model)
+
+        self.table.customContextMenuRequested.connect(self.show_rightmenu)
+        self.table.setColumnWidth(0, 200)
+        self.table.setColumnWidth(1, 200)
+
+        self.delAction = Action(FluentIcon.DELETE, '删除', triggered=lambda: print("删除成功"))
+
+        #底部按钮
+        self.hintIcon.setFixedSize(16, 16)
+        self.bottomLayout.setSpacing(10)
+        self.bottomLayout.setContentsMargins(24, 15, 24, 20)
+        self.bottomLayout.addWidget(self.hintIcon, 0, Qt.AlignmentFlag.AlignLeft)
+        self.bottomLayout.addWidget(self.hintLabel, 0, Qt.AlignmentFlag.AlignLeft)
+        self.bottomLayout.addStretch(1)
+        self.bottomLayout.addWidget(self.addButton, 0, Qt.AlignmentFlag.AlignRight)
+        self.bottomLayout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+
+        self.vBoxLayout.addWidget(self.table, 0, Qt.AlignmentFlag.AlignTop)
+        self.vBoxLayout.addLayout(self.bottomLayout)
+
+
+
+    def show_rightmenu(self,pos):
+        index = self.table.indexAt(pos) # 返回点击的index
+        if index.isValid(): # 如果有index,则弹出菜单,并且高光选中的行
+            self.table.setCurrentIndex(index)
+            self.menu = RoundMenu()
+
+
+            self.menu.addAction(self.delAction)
+
+        self.menu.exec(QCursor.pos())
 
 class AddCourseCommandBar(CommandBar):
     def __init__(self,controller :TeacherController,parent = None):
@@ -57,20 +188,19 @@ class AddCourseTableView(TableView):
     def __init__(self,controller:TeacherController,parent = None):
         super().__init__(parent)
         self.controller = controller
-        controller.get_homework_list()
-        self.data = controller.homework_list
+        controller.get_all_course_list()
+        self.data = controller.all_course_list
 
         self.model = QStandardItemModel()
 
         for i, row in enumerate(self.data):
-            self.model.setItem(i, 0, QStandardItem(str(row['student_id'])))
-            self.model.setItem(i, 1, QStandardItem(row['student_name']))
-            self.model.setItem(i, 2, QStandardItem(row['homework_name']))
-            self.model.setItem(i, 3, QStandardItem(row['content']))
-            self.model.setItem(i, 4, QStandardItem(str(row['submit_time'])))
-            self.model.setItem(i, 5, QStandardItem(str(row['score'])))
+            self.model.setItem(i, 0, QStandardItem(str(row['cid'])))
+            self.model.setItem(i, 1, QStandardItem(row['dept_name']))
+            self.model.setItem(i, 2, QStandardItem(row['course_name']))
+            self.model.setItem(i, 3, QStandardItem(str(row['credit'])))
 
-        self.model.setHorizontalHeaderLabels(['学生id','姓名', '作业名', '内容','提交时间','分数'])
+
+        self.model.setHorizontalHeaderLabels(['课程号', '开课部门','课程名', '学分'])
 
         self.agentModel = QSortFilterProxyModel()
         self.agentModel.setSourceModel(self.model)
@@ -89,21 +219,19 @@ class AddCourseTableView(TableView):
         self.resizeColumnsToContents()
 
         self.copyAction = Action(FluentIcon.COPY, '复制', triggered=lambda: print("复制成功"))
-        # self.deleteAction = Action(FluentIcon.DELETE, '删除', triggered=lambda: print("删除成功"))
-        self.gradeAction = Action(FluentIcon.EDIT, '设置分数', triggered=lambda: print("查看作业"))
-        self.awardAction = Action(FluentIcon.PEOPLE, '设置奖惩', triggered=lambda: print("查看学生"))
+
+        self.selectAction = Action(FluentIcon.EDIT, '选择课程', triggered=lambda: print("查看作业"))
+
 
 
     def reset(self):
-        self.data = self.controller.homework_list
+        self.data = self.controller.all_course_list
         self.model.removeRows(0, self.model.rowCount())
         for i, row in enumerate(self.data):
-            self.model.setItem(i, 0, QStandardItem(str(row['student_id'])))
-            self.model.setItem(i, 1, QStandardItem(row['student_name']))
-            self.model.setItem(i, 2, QStandardItem(row['homework_name']))
-            self.model.setItem(i, 3, QStandardItem(row['content']))
-            self.model.setItem(i, 4, QStandardItem(str(row['submit_time'])))
-            self.model.setItem(i, 5, QStandardItem(str(row['score'])))
+            self.model.setItem(i, 0, QStandardItem(str(row['cid'])))
+            self.model.setItem(i, 1, QStandardItem(row['dept_name']))
+            self.model.setItem(i, 2, QStandardItem(row['course_name']))
+            self.model.setItem(i, 3, QStandardItem(str(row['credit'])))
         self.agentModel.setSourceModel(self.model)
         self.resizeColumnsToContents()
 
@@ -117,11 +245,8 @@ class AddCourseTableView(TableView):
 
 
             self.menu.addAction(self.copyAction)
-            self.menu.addAction(self.gradeAction)
-            self.menu.addAction(self.awardAction)
+            self.menu.addAction(self.selectAction)
 
-
-            #menu.addAction(QAction('全选', shortcut='Ctrl+A'))
         self.menu.exec(QCursor.pos())
 
 
@@ -134,20 +259,52 @@ class AddCourseInterface(ScrollArea):
 
         self.vBoxLayout = QVBoxLayout(self.view)
 
+        # 选择课程界面
+        self.select = QWidget(self.view)
+        self.select.setObjectName("select")
+        self.selectLayout = QVBoxLayout()
+        self.commandBar = AddCourseCommandBar(self.controller,self.view)
+        self.table = AddCourseTableView(self.controller,self)
+        self.selectLayout.addWidget(self.commandBar)
+        self.selectLayout.addWidget(self.table)
+        self.select.setLayout(self.selectLayout)
+
+        # 课程信息界面：时间槽，教室(messagebox)，容纳人数，学期，cid，sid
+        self.add = QWidget(self.view)
+        self.add.setObjectName("add")
+        self.addLayout = QVBoxLayout()
+        self.addCourseInfoCard = AddCourseInfoCard(self.controller,self.add)
+        self.addCourseTableCard = AddCourseTableCard(self.add)
+        self.submit = PrimaryPushSettingCard(
+            text="提交",
+            icon=FluentIcon.INFO,
+            title="提交",
+            content="将课程信息提交到数据库"
+        )
+        self.addLayout.addWidget(self.addCourseInfoCard, 0, Qt.AlignmentFlag.AlignTop)
+        self.addLayout.addWidget(self.addCourseTableCard, 0, Qt.AlignmentFlag.AlignTop)
+        self.addLayout.addWidget(self.submit, 0, Qt.AlignmentFlag.AlignTop)
+        self.add.setLayout(self.addLayout)
+
+        # 各种链接
+        self.table.selectAction.triggered.connect(self.open_create_course)
+        self.addCourseTableCard.addButton.clicked.connect(self.open_add_course_time_box)
+        self.addCourseTableCard.delAction.triggered.connect(self.del_course_time)
+        self.commandBar.add.triggered.connect(self.create_new_course)
+
         self.stack = QStackedWidget(self)
 
-        self.stack.addWidget(self.myCourse)
-        self.stack.addWidget(self.myCourseStudent)
-        self.stack.addWidget(self.myCourseHomework)
+        self.stack.addWidget(self.select)
+        self.stack.addWidget(self.add)
 
-        self.stack.setCurrentWidget(self.myCourse)
+        self.stack.setCurrentWidget(self.select)
 
         self.breadcrumbBar = BreadcrumbBar(self)  # 面包屑导航栏
         self.breadcrumbBar.currentItemChanged.connect(self.switchInterface)
         setFont(self.breadcrumbBar, 18)
         self.breadcrumbBar.setSpacing(20)
 
-        self.breadcrumbBar.addItem(self.myCourse.objectName(), "选择课程")
+        self.breadcrumbBar.addItem(self.select.objectName(), "选择待开课的课程")
         # self.breadcrumbBar.addItem(self.t.objectName(), "学生管理")
 
         self.setWidget(self.view)
@@ -158,12 +315,151 @@ class AddCourseInterface(ScrollArea):
         self.vBoxLayout.setContentsMargins(0, 0, 10, 30)
 
         self.vBoxLayout.addWidget(self.breadcrumbBar, 0, Qt.AlignmentFlag.AlignTop)
-        self.vBoxLayout.addWidget(self.stack, 0)
+        self.vBoxLayout.addWidget(self.stack, 0, Qt.AlignmentFlag.AlignTop)
 
         self.enableTransparentBackground()
 
 
+    def open_create_course(self):
+        self.stack.setCurrentWidget(self.add)
+        self.breadcrumbBar.addItem(self.add.objectName(), "填写课程信息")
+        self.controller.curr_add_course_id =  self.controller.all_course_list[self.table.currentIndex().row()]['cid']
+        self.addCourseInfoCard.updateInfo()
+
+    def open_add_course_time_box(self):
+        self.messageBox = AddClassTimeMessageBox(self.controller,self.parent())
+        if self.messageBox.exec():
+            time_slot_id = self.controller.time_slot_list[self.messageBox.timeComboBox.currentIndex()]['timeslot_id'] -1
+            classroom_id = self.controller.classroom_list[self.messageBox.classroomComboBox.currentIndex()]['classroom_id'] -1
+            self.add_course_time(time_slot_id,classroom_id)
+
+    def del_course_time(self):
+        time_slot_id = self.controller.time_classroom_list[self.addCourseTableCard.table.currentIndex().row()]['time_slot_id']
+        classroom_id = self.controller.time_classroom_list[self.addCourseTableCard.table.currentIndex().row()]['classroom_id']
+        status,msg = self.controller.del_course_time_list(time_slot_id,classroom_id)
+        if not status:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.parent()
+            )
+            return
+        InfoBar.success(
+            title='成功',
+            content='删除成功',
+            orient=Qt.Vertical,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=3000,
+            parent=self.parent()
+        )
+        self.addCourseTableCard.model.removeRow(self.addCourseTableCard.table.currentIndex().row())
+
+    def add_course_time(self,time_slot_id,classroom_id):
+        status,msg = self.controller.add_course_time_list(time_slot_id,classroom_id)
+        if not status:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.parent()
+            )
+            return
+        InfoBar.success(
+            title='成功',
+            content='添加成功',
+            orient=Qt.Vertical,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=3000,
+            parent=self.parent()
+        )
+        self.addCourseTableCard.model.appendRow([
+            QStandardItem('周' +
+                          str(self.controller.time_slot_list[time_slot_id]['day']) +
+                          ' ' +
+                          str(self.controller.time_slot_list[time_slot_id]['start_time']) +
+                          '-' +
+                          str(self.controller.time_slot_list[time_slot_id]['end_time']))
+            ,
+            QStandardItem(self.controller.classroom_list[classroom_id]['building_name'] +
+                          ' ' +
+                          str(self.controller.classroom_list[classroom_id]['room_number']))
+        ])
+        #self.addCourseTableCard.table.resizeColumnsToContents()
+
+    def submit_course(self):
+        status,msg = self.controller.submit_course()
+        if not status:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.parent()
+            )
+            return
+        InfoBar.success(
+            title='成功',
+            content='提交成功',
+            orient=Qt.Vertical,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=3000,
+            parent=self.parent()
+        )
+        self.controller.reset_course_time_list()
+        self.addCourseTableCard.model.removeRows(0, self.addCourseTableCard.model.rowCount())
+        self.switchInterface('select')
+
+    def create_new_course(self):#创建新课程,不是section
+        self.messageBox = AddNewCourseMessageBox(self.controller,self.parent())
+        while self.messageBox.exec():
+            data = {
+                "cid":self.messageBox.courseIdLineEdit.text(),
+                "course_name":self.messageBox.courseNameLineEdit.text(),
+                "did":self.controller.account.dept_list[self.messageBox.departmentComboBox.currentIndex()]['did'],
+                "credit":self.messageBox.creditLineEdit.text()
+            }
+            status,msg = self.controller.create_new_course(data)
+            if not status:
+                InfoBar.error(
+                    title='错误',
+                    content=msg,
+                    orient=Qt.Vertical,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self.parent()
+                )
+                continue
+            InfoBar.success(
+                title='成功',
+                content='创建成功',
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.parent()
+            )
+            self.controller.get_all_course_list()
+            self.table.reset()
+            break
 
 
     def switchInterface(self, objectName):
         self.stack.setCurrentWidget(self.findChild(QWidget, objectName))
+        if objectName == 'select':
+            #清空已选时间等信息
+            self.addCourseTableCard.model.removeRows(0, self.addCourseTableCard.model.rowCount())
+            #self.addCourseTableCard.table.reset()
+            self.controller.reset_course_time_list()

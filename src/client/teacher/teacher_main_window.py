@@ -6,6 +6,7 @@ from qfluentwidgets import MSFluentWindow, FluentIcon, NavigationItemPosition,se
 from src.client.core.account import Account, TeacherController
 from src.client.public.account_interface import AccountInterface
 from src.client.teacher.my_course_interface import MyCourseInterface
+from src.client.teacher.add_course_interface import AddCourseInterface
 
 
 class TeacherMainWindow(MSFluentWindow):
@@ -20,14 +21,19 @@ class TeacherMainWindow(MSFluentWindow):
         # add sub interfaces
         self.myCourseInterface = MyCourseInterface(self.controller)
         self.myCourseInterface.setObjectName("myCourseInterface")
+        self.addCourseInterface = AddCourseInterface(self.controller)
+        self.addCourseInterface.setObjectName("addCourseInterface")
+
+
 
         setThemeColor('#f18cb9', lazy=True)
         self.setFixedSize(960, 640)
         self.setWindowTitle('Teacher')
         self.setWindowIcon(QIcon(':/qfluentwidgets/images/logo.png'))
 
-        self.addSubInterface(self.accountInterface, FluentIcon.PEOPLE, "账户", FluentIcon.PEOPLE, isTransparent=True, position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.myCourseInterface, FluentIcon.LIBRARY, "我的课程", FluentIcon.LIBRARY_FILL, isTransparent=True)
+        self.addSubInterface(self.addCourseInterface, FluentIcon.ADD, "添加课程", FluentIcon.ADD_TO, isTransparent=True)
+        self.addSubInterface(self.accountInterface, FluentIcon.PEOPLE, "账户", FluentIcon.PEOPLE, isTransparent=True, position=NavigationItemPosition.BOTTOM)
         self.titleBar.raise_()
 
 if __name__ == '__main__':
