@@ -4,16 +4,17 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QGraphi
 from PIL import Image
 from qfluentwidgets import FluentIcon, ScrollArea, BodyLabel, GroupHeaderCardWidget, ElevatedCardWidget, CaptionLabel, \
     PasswordLineEdit, PrimaryPushButton, IconWidget, TitleLabel, SubtitleLabel, PushSettingCard, PrimaryPushSettingCard
-
+# from src.client.admin.admin_main_window import *
 
 class ChangePasswordCard(GroupHeaderCardWidget):
-    def __init__(self,parent = None):
+    def __init__(self, account_id, parent = None):
         super().__init__(parent)
         self.setTitle("修改密码")
         self.setBorderRadius(8)
 
         self.hintIcon = IconWidget(FluentIcon.INFO, self)
-        self.idLabel = BodyLabel("ID: 10086")
+        # 设置ID:为当前用户的ID
+        self.idLabel = BodyLabel(f"ID: {account_id}")
         self.passwordEdit1 = PasswordLineEdit()
         self.passwordEdit2 = PasswordLineEdit()
         self.hintLabel = BodyLabel("点击按钮更改密码 👉")
@@ -37,16 +38,15 @@ class ChangePasswordCard(GroupHeaderCardWidget):
 
 
 class AccountInterface(ScrollArea):
-    def __init__(self, parent=None):
+    def __init__(self, account_id, parent=None):
         super().__init__(parent)
 
         self.view = QWidget(self)
-
         self.vBoxLayout = QVBoxLayout(self.view)
 
         self.settingLabel = SubtitleLabel(self.view)
         self.settingLabel.setText("设置")
-        self.changePasswordCard = ChangePasswordCard(self.view)
+        self.changePasswordCard = ChangePasswordCard(account_id, self.view)
         self.logout = PrimaryPushSettingCard(
                         text="退出",
                         icon=FluentIcon.CLOSE,

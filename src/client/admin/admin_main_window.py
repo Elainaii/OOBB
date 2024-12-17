@@ -21,7 +21,7 @@ class AdminMainWindow(MSFluentWindow):
         self.teacherInterface.setObjectName("teacherInterface")
         self.adminInterface = AdminInterface( self.controller,self)
         self.adminInterface.setObjectName("adminInterface")
-        self.accountInterface = AccountInterface(self)
+        self.accountInterface = AccountInterface(account.id, self)
         self.accountInterface.setObjectName("accountInterface")
         self.otherInterface = OthersInterface(self.controller,self)
         self.otherInterface.setObjectName("otherInterface")
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     from PySide6.QtWidgets import QApplication
     account = Account()
     account.identity = 'A'
-    account.account_id = '10001'
+    # 管理员的ID和姓名从对应的地方获取
     app = QApplication([])
     window = AdminMainWindow(account)
     window.show()

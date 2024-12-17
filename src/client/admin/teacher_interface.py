@@ -3,7 +3,7 @@ from msilib.schema import ComboBox, CheckBox
 from PySide6.QtGui import QIcon, QStandardItem, QStandardItemModel, QActionGroup, QCursor,QAction
 from PySide6.QtCore import Qt, QSortFilterProxyModel, QAbstractItemModel, Signal
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QAbstractItemView, QSizePolicy, QTableView, QHeaderView, \
-    QButtonGroup, QHBoxLayout
+    QButtonGroup, QHBoxLayout, QFileDialog
 
 from qfluentwidgets import (ScrollArea, MSFluentWindow, FluentIcon, NavigationItemPosition, CommandBar, Action, \
                             SearchLineEdit, TableView, CaptionLabel, LineEdit, TransparentDropDownPushButton, setFont,
@@ -14,6 +14,7 @@ from qfluentwidgets import (ScrollArea, MSFluentWindow, FluentIcon, NavigationIt
 
 
 from src.client.core.account import Account, AdminController
+import pandas as pd
 
 class ChangePasswordMessageBox(MessageBoxBase):
     def __init__(self,controller:AdminController,parent=None):
@@ -22,20 +23,20 @@ class ChangePasswordMessageBox(MessageBoxBase):
         self.titleLabel = SubtitleLabel('修改密码')
         self.nameEdit = LineEdit()
         self.idEdit = LineEdit()
-        self.oldPasswordEdit = LineEdit()
+        # self.oldPasswordEdit = LineEdit()
         self.newPasswordEdit = LineEdit()
         self.confirmPasswordEdit = LineEdit()
 
         self.nameEdit.setPlaceholderText('输入姓名')
         self.idEdit.setPlaceholderText('输入id')
-        self.oldPasswordEdit.setPlaceholderText('输入旧密码')
+        # self.oldPasswordEdit.setPlaceholderText('输入旧密码')
         self.newPasswordEdit.setPlaceholderText('输入新密码')
         self.confirmPasswordEdit.setPlaceholderText('确认新密码')
 
         self.viewLayout.addWidget(self.titleLabel)
         self.viewLayout.addWidget(self.nameEdit)
         self.viewLayout.addWidget(self.idEdit)
-        self.viewLayout.addWidget(self.oldPasswordEdit)
+        # self.viewLayout.addWidget(self.oldPasswordEdit)
         self.viewLayout.addWidget(self.newPasswordEdit)
         self.viewLayout.addWidget(self.confirmPasswordEdit)
 
@@ -204,11 +205,11 @@ class TeacherTableView(TableView):
             #self.l.setCurrentIndex(Q)
             # 逐个添加动作，Action 继承自 QAction，接受 FluentIconBase 类型的图标
             self.copyAction = Action(FluentIcon.COPY, '复制', triggered=lambda: print("复制成功"))
-            self.deleteAction = Action(FluentIcon.DELETE, '删除', triggered=lambda: print("删除成功"))
+            # self.deleteAction = Action(FluentIcon.DELETE, '删除', triggered=lambda: print("删除成功"))
             self.passwordAction = Action(FluentIcon.EDIT,'修改密码',triggered= self.changePassword)
             self.infoAction = Action(FluentIcon.LABEL,'修改信息',triggered =self.changeInfo)
             self.menu.addAction(self.copyAction)
-            self.menu.addAction(self.deleteAction)
+            # self.menu.addAction(self.deleteAction)
             self.menu.addAction(self.passwordAction)
             self.menu.addAction(self.infoAction)
 
@@ -229,10 +230,10 @@ class TeacherTableView(TableView):
         while self.changePasswordBox.exec():
             name = self.changePasswordBox.nameEdit.text()
             sid = self.changePasswordBox.idEdit.text()
-            oldPassword = self.changePasswordBox.oldPasswordEdit.text()
+            # oldPassword = self.changePasswordBox.oldPasswordEdit.text()
             newPassword = self.changePasswordBox.newPasswordEdit.text()
             confirmPassword = self.changePasswordBox.confirmPasswordEdit.text()
-            if name == '' or sid == '' or oldPassword == '' or newPassword == '' or confirmPassword == '':
+            if name == '' or sid == '' or newPassword == '' or confirmPassword == '':
                 InfoBar.error(
                     title='错误',
                     content="请填写完整内容",
@@ -244,9 +245,9 @@ class TeacherTableView(TableView):
                 )
             else:
                 data = {
-                    'id':sid,
-                    'old_password':oldPassword,
-                    'new_password':newPassword,
+                    'account_id':sid,
+                    # 'old_password':oldPassword,
+                    'password':newPassword,
                 }
                 status,msg = self.controller.change_password(data)
                 if status:
@@ -345,10 +346,10 @@ class TeacherCommandBar(CommandBar):
         self.controller = controller
 
         self.add = Action(FluentIcon.ADD, "添加", self,triggered = self.addTeacher)
-        self.copy = Action(FluentIcon.COPY, "", self)
-        self.share = Action(FluentIcon.SHARE, "", self)
+        self.refresh = Action(FluentIcon.SYNC, "刷新", self)
+        self.share = Action(FluentIcon.SHARE, "导出", self)
         self.addAction(self.add)
-        self.addAction(self.copy)
+        self.addAction(self.refresh)
         self.addAction(self.share)
         self.addSeparator()
         self.up = Action(FluentIcon.UP, "")
@@ -451,7 +452,8 @@ class TeacherInterface(ScrollArea):
         self.commandBar.up.triggered.connect(self.prev_page)
         self.commandBar.down.triggered.connect(self.next_page)
         self.commandBar.pageEdit.textEdited.connect(self.change_page)
-
+        self.commandBar.refresh.triggered.connect(self.refresh)
+        self.commandBar.share.triggered.connect(self.share)
         self.commandBar.search.textEdited.connect(lambda str1: self.table.agentModel.setFilterRegularExpression(str1))
         self.commandBar.pageLabel2.setText("页,共" + str(self.controller.teacher_total_page) + "页")
 
@@ -523,6 +525,28 @@ class TeacherInterface(ScrollArea):
         self.table.reset()
         return
 
+    # 刷新
+    def refresh(self):
+        self.controller.get_teacher_list()
+        self.table.reset()
+        return
 
-
-
+    def share(self):
+        # 先获取数据
+        a, b, data = self.controller.get_all_teacher_list()
+        df = pd.DataFrame(data)
+        # 选择保存路径
+        path = QFileDialog.getSaveFileName(self, '保存文件', '', 'Excel files (*.xlsx)')
+        if path[0] == '':
+            return
+        df.to_excel(path[0], index=False)
+        InfoBar.success(
+            title='成功',
+            content='导出成功',
+            orient=Qt.Vertical,
+            isClosable=True,
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=3000,
+            parent=self
+        )
+        return

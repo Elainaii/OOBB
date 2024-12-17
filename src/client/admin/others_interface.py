@@ -135,7 +135,7 @@ class ChangeDepartmentCard(GroupHeaderCardWidget):
         if name:
             data = {
                 "did":did,
-                "name":name
+                "dept_name":name
             }
             status,msg =  self.controller.change_department(data)
             if status:

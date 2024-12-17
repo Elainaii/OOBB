@@ -155,3 +155,15 @@ def add_semester():
     services.add_semester()
     return jsonify({'code': 0, 'message': 'success'})
 
+# 帮助教师、学生修改密码
+# 无需验证旧密码，直接修改
+@admin_bp.route('/admin/account/change_password', methods=['POST'])
+def change_password_admin():
+    data = request.json
+    try:
+        services.change_password_admin(data)
+    except myException as e:
+        return jsonify({'code': -1, 'message': str(e)})
+    except Exception as e:
+        return jsonify({'code': -1, 'message': str(e)})
+    return jsonify({'code': 0, 'message': 'success','data':data})

@@ -825,12 +825,21 @@ def change_password(account_id, password):
 def change_department(data: dict):
     db = get_db()
     cursor = db.cursor()
-    # 检查院系是否存在
-    cursor.execute("SELECT did FROM department WHERE did = %s", (data['did'],))
-    did = cursor.fetchone()
-    if not did:
-        raise myException('Department id does not exist.')
+    # 检查院系名字是否存在，存在不给修改
+    cursor.execute("SELECT dept_name FROM department WHERE dept_name = %s", (data['dept_name'],))
+    dept_name = cursor.fetchone()
+    # 如果存在则不给修改
+    if dept_name:
+        raise myException('Department name already exists.')
     # 修改院系名字
     cursor.execute("UPDATE department SET dept_name = %s WHERE did = %s", (data['dept_name'], data['did']))
+    db.commit()
+    cursor.close()
+
+# 帮助修改密码
+def change_password_admin(data:dict):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("UPDATE account SET password = %s WHERE id = %s", (data['password'], data['account_id']))
     db.commit()
     cursor.close()
