@@ -103,6 +103,7 @@ class StudentController():
         except requests.exceptions.Timeout:
             return False,"连接超时"
         except requests.exceptions.RequestException as e:
+            print(e)
             return False,f"An error occurred: {e}"
         response_json = r.json()
         if r.json()['code'] == 0:

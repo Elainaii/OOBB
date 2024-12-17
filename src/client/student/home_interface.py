@@ -21,7 +21,7 @@ class InfoCard(GroupHeaderCardWidget):
         # 平均分 = data['avg_score']
         self.avgScoreLabel = BodyLabel(f"平均分数：{data['avg_score']}", self)
         self.totalCreditLabel = BodyLabel(f"总学分：{data['total_credit']}", self)
-        self.totalCourseLabel = BodyLabel("总课程", self)
+        self.totalCourseLabel = BodyLabel(f"总课程数目：{data['count_course']}", self)
 
         # 添加组件到分组中
         self.addGroup(FluentIcon.DICTIONARY,"平均分数","你的平均分数",self.avgScoreLabel)
