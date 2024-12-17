@@ -384,6 +384,82 @@ class AdminController:
         else:
             return False,r.json()['message']
 
+
+class TeacherController():
+    def __init__(self,account:Account):
+        self.account = account
+
+        self.course_list = list()
+        self.course_total_size = -1
+        self.course_curr_page = 0
+        self.course_total_page = 0
+        self.page_size = 12
+
+        self.curr_course_id = -1
+        self.student_list = list()
+        self.student_curr_page = 0
+        self.student_total_page = 0
+        self.student_total_size = -1
+
+        self.homework_list = list()
+        self.homework_curr_page = 0
+        self.homework_total_page = 0
+        self.homework_total_size = -1
+
+
+        self.account.get_semester_list()
+        self.account.get_dept_list()
+
+
+    def get_course_list(self):
+        try:
+            r = requests.get(Config.API_BASE_URL + f"/teacher/{self.account.id}/courses?size=12&page={self.course_curr_page}", timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+        if r.json()['code'] == 0:
+            self.course_list = r.json()['data']
+            self.course_total_size = r.json()['total_num']
+            self.course_total_page = self.course_total_size // self.page_size + 1
+            return True,"Get course list success."
+        else:
+            return False,r.json()['message']
+
+    def get_homework_list(self):
+        try:
+            r = requests.get(Config.API_BASE_URL + f"/teacher/{self.account.id}/courses/{self.curr_course_id}/homeworks?size=12&page={self.homework_curr_page}", timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+        if r.json()['code'] == 0:
+            self.homework_list = r.json()['data']
+            self.homework_total_size = r.json()['total_num']
+            self.homework_total_page = self.homework_total_size // self.page_size + 1
+            return True,"Get homework list success."
+        else:
+            return False,r.json()['message']
+
+    def get_course_students(self):
+        try:
+            r = requests.get(Config.API_BASE_URL + f"/teacher/{self.account.id}/courses/{self.curr_course_id}/students?size=12&page={self.course_curr_page}", timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+        if r.json()['code'] == 0:
+            self.student_list = r.json()['data']
+            self.student_total_size = r.json()['total_num']
+            self.student_total_page = self.student_total_size // self.page_size + 1
+            return True,"Get course students success."
+        else:
+            return False,r.json()['message']
+
+
     def change_password(self,data):
         try:
             r = requests.post(Config.API_BASE_URL + "/admin/account/change_password", json=data, timeout=2)

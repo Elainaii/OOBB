@@ -402,16 +402,18 @@ def get_homework(sid, page: int, size: int):
     cursor.close()
     return courses, len(num)
 
-# 获取某个课程的学生列表，返回学生的id，姓名
+# 获取某个课程的学生列表，返回学生的id，姓名,专业，院系，成绩
 def get_course_students(tid, cid, page: int, size: int, filters: dict):
     db = get_db()
     cursor = db.cursor(dictionary=True)
     sql = (
-        "SELECT student.sid as student_id, student.student_name as student_name "
+        "SELECT student.sid as student_id, student.student_name as student_name ,"
+        "major_name , dept_name as dept_name, student_section.score as score "
         "FROM student "
         "JOIN student_section ON student.sid = student_section.sid "
         "JOIN section ON student_section.sec_id = section.sec_id "
         "JOIN teacher_section ON section.sec_id = teacher_section.sec_id "
+        "NATURAL JOIN major  NATURAL JOIN department "
         "where teacher_section.tid = %s and section.cid = %s "
     )
     params = [tid, cid]
@@ -440,7 +442,8 @@ def get_homeworks(tid, cid, page: int, size: int, filters: dict):
         "SELECT student.sid as student_id, student.student_name as student_name, "
         "homework_collection.homework_name as homework_name, "
         "homework_collection.content as content, "
-        "homework_collection.submit_time as submit_time "
+        "homework_collection.submit_time as submit_time,"
+        "homework_collection.score as score "
         "FROM student "
         "JOIN homework_collection ON student.sid = homework_collection.sid "
         "JOIN section ON homework_collection.sec_id = section.sec_id "
