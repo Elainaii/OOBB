@@ -57,3 +57,33 @@ def get_semester():
 def fetch_major():
     data = services.get_major()
     return jsonify({'code': 0, 'message': 'success', 'data': data})
+
+# 获取所有教室，分页
+@public_bp.route('/classroom', methods=['GET'])
+def get_classroom():
+    page_size = request.args.get('size')
+    page_number = request.args.get('page')
+    if not page_size or not page_number:
+        return create_response({}, message='page and size are required,such as /classroom?size=20&page=0', code=-1)
+    page_size = int(page_size)
+    page_number = int(page_number)
+    data, num = services.get_classroom(page_number, page_size)
+    return {'code': 0, 'message': 'success','page':page_number,'size':page_size , 'total_num': num ,'data': data}
+
+# 获取所有时间段
+@public_bp.route('/time_slot', methods=['GET'])
+def get_time_slot():
+    data = services.get_time_slot()
+    return jsonify({'code': 0, 'message': 'success', 'data': data})
+
+# 获取所有课程，分页
+@public_bp.route('/course', methods=['GET'])
+def get_course():
+    page_size = request.args.get('size')
+    page_number = request.args.get('page')
+    if not page_size or not page_number:
+        return create_response({}, message='page and size are required,such as /course?size=20&page=0', code=-1)
+    page_size = int(page_size)
+    page_number = int(page_number)
+    data, num = services.get_course(page_number, page_size)
+    return {'code': 0, 'message': 'success','page':page_number,'size':page_size , 'total_num': num ,'data': data}

@@ -165,6 +165,7 @@ def get_major():
 
 # 获取学生信息，包括学号，姓名，性别，年龄，院系，专业
 # 还要返回总学分和平均分（平均分只用算已通过的课程、并且不用加权）
+# 并且统计学生选课的总数
 def get_student_info(sid):
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -188,19 +189,25 @@ def get_student_info(sid):
         "), avg_score AS ( "
         "   SELECT avg(score) as avg_score "
         "   FROM max_score "
+        "), count_course AS ( "
+        "   SELECT count(*) as count_course "
+        "   FROM student_section "
+        "   WHERE sid = %s "
         ") "
         "SELECT student.sid as student_id, student.student_name as student_name, "
         "student.sex as student_sex, student.birthday as student_birthday, "
         "department.dept_name as department_name, major.major_name as major_name, "
-        "total_credit.total_credit as total_credit, avg_score.avg_score as avg_score "
+        "total_credit.total_credit as total_credit, avg_score.avg_score as avg_score, "
+        "count_course.count_course as count_course "
         "FROM student "
         "JOIN department ON student.did = department.did "
         "JOIN major ON student.mid = major.mid "
         "JOIN total_credit ON true "
         "JOIN avg_score ON true "
+        "JOIN count_course ON true "
         "WHERE student.sid = %s "
     )
-    cursor.execute(sql, (sid, sid))
+    cursor.execute(sql, (sid, sid, sid))
     student = cursor.fetchone()
     cursor.close()
     return student
@@ -271,7 +278,7 @@ def get_my_course_info(sid , page: int, size: int, filters: dict):
 
     # 通过学期号过滤
     f1 = filters.get('semester_id')
-    if f1:
+    if f1 is not None:
         sql += "AND section.semester_id = %s "
         params.append(f1)
     # 通过课程状态过滤
@@ -290,11 +297,11 @@ def get_my_course_info(sid , page: int, size: int, filters: dict):
             sql += "AND student_section.score < 60 "
     # 通过课程名过滤
     f3 = filters.get('course_name')
-    if f3:
-        sql += f"AND course.course_name LIKE %s "
+    if f3 is not None:
+        sql += "AND course.course_name LIKE %s "
         params.append(f"%{f3}%")
     # 先获取总数
-    cursor.execute(sql, (sid, ))
+    cursor.execute(sql, params)
     num = cursor.fetchall()
     # 获取总数
     num = len(num)
@@ -847,6 +854,37 @@ def change_password_admin(data:dict):
     db.commit()
     cursor.close()
 
+# 获取所有教室
+def get_classroom(page: int, size: int):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    # 获取教室总数
+    cursor.execute("SELECT count(*) as num FROM classroom")
+    num = cursor.fetchone()
+    # 获取教室信息
+    cursor.execute(f"SELECT * FROM classroom limit {size} offset {page*size}")
+    classrooms = cursor.fetchall()
+    cursor.close()
+    return classrooms, num['num']
 
-def get_all_courses():
-    pass # TODO
+# 获取所有时间段
+def get_timeslot():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM timeslot")
+    timeslots = cursor.fetchall()
+    cursor.close()
+    return timeslots
+
+# 获取所有课程，分页
+def get_course(page: int, size: int):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    # 获取课程总数
+    cursor.execute("SELECT count(*) as num FROM course")
+    num = cursor.fetchone()
+    # 获取课程信息
+    cursor.execute(f"SELECT * FROM course limit {size} offset {page*size}")
+    courses = cursor.fetchall()
+    cursor.close()
+    return courses, num['num']

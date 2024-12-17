@@ -35,7 +35,6 @@ def get_courses(tid):
     data, num = services.get_courses(tid, page_number, page_size, filters)
     return {'code': 0, 'message': 'success','page':page_number,'size':page_size , 'total_num': num ,'data': data}
 
-
 #添加一门课程    ：在已经存在的课程中选择一个在这个学期开课
 @teacher_bp.route('/teacher/<int:tid>/courses/add', methods=['POST'])
 def add_course(tid):

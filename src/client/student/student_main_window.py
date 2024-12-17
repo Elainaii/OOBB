@@ -17,11 +17,11 @@ class StudentMainWindow(MSFluentWindow):
         self.myCourseInterface.setObjectName("myCourseInterface")
         self.selectCourseInterface = SelectCourseInterface(self)
         self.selectCourseInterface.setObjectName("selectCourseInterface")
-        self.homeInterface = HomeInterface(self)
+        self.homeInterface = HomeInterface(controller=self.controller, parent=self)
         self.homeInterface.setObjectName("homeInterface")
         self.awardInterface = AwardInterface(self)
         self.awardInterface.setObjectName("awardInterface")
-        self.accountInterface = AccountInterface(self)
+        self.accountInterface = AccountInterface(account.id, self)
         self.accountInterface.setObjectName("accountInterface")
         self.homeworkInterface = HomeworkInterface(self)
         self.homeworkInterface.setObjectName("homeworkInterface")
@@ -46,8 +46,9 @@ class StudentMainWindow(MSFluentWindow):
 
 if __name__ == '__main__':
     from PySide6.QtWidgets import QApplication
-
+    account = Account()
+    account.identity = 'S'
     app = QApplication([])
-    window = StudentMainWindow()
+    window = StudentMainWindow(account)
     window.show()
     app.exec()
