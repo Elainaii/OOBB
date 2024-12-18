@@ -920,9 +920,9 @@ def get_teacher_info(tid):
         "FROM teacher "
         "JOIN department ON teacher.did = department.did "
         "JOIN teacher_section ON teacher.tid = teacher_section.tid "
-        "GROUP BY teacher.tid "
+        "WHERE teacher.tid = %s "
     )
-    cursor.execute(sql)
+    cursor.execute(sql, (tid,))
     teachers = cursor.fetchall()
     cursor.close()
     return teachers
