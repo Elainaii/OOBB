@@ -809,7 +809,7 @@ def new_course(data:dict):
 def change_password(account_id, password):
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("UPDATE account SET password = %s WHERE account_id = %s", (password, account_id))
+    cursor.execute("UPDATE account SET password = %s WHERE id = %s", (password, account_id))
     db.commit()
     cursor.close()
 

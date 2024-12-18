@@ -2,7 +2,7 @@ from qfluentwidgets import setThemeColor
 
 from src.client.student.award_interface import AwardInterface
 from src.client.student.home_interface import *
-from src.client.public.account_interface import AccountInterface
+from src.client.public.account_interface import *
 from src.client.student.homework_interface import HomeworkInterface
 from src.client.student.mycourse_interface import *
 from src.client.student.selectcourse_interface import *
@@ -22,7 +22,7 @@ class StudentMainWindow(MSFluentWindow):
         self.homeInterface.setObjectName("homeInterface")
         self.awardInterface = AwardInterface(controller=self.controller, parent=self)
         self.awardInterface.setObjectName("awardInterface")
-        self.accountInterface = AccountInterface(account.id, self)
+        self.accountInterface = AccountInterface(controller=self.controller, parent=self)
         self.accountInterface.setObjectName("accountInterface")
         self.homeworkInterface = HomeworkInterface(controller=self.controller, parent=self)
         self.homeworkInterface.setObjectName("homeworkInterface")

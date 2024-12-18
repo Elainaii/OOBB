@@ -16,7 +16,7 @@ class TeacherMainWindow(MSFluentWindow):
 
         self.account = account
         self.controller = TeacherController(account)
-        self.accountInterface = AccountInterface(account.id,self)
+        self.accountInterface = AccountInterface(self.controller, self)
         self.accountInterface.setObjectName("accountInterface")
 
         self.aiInterface = AiInterface(self)
