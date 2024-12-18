@@ -72,7 +72,7 @@ class AddDepartmentCard(PushSettingCard):
             else:
                 InfoBar.error(
                     title='错误',
-                    content=msg,
+                    content='院系名称和编号不能为空',
                     orient=Qt.Vertical,
                     isClosable=True,
                     position=InfoBarPosition.TOP,

@@ -218,7 +218,7 @@ def get_courses(tid, page: int, size: int, filters: dict):
     cursor = db.cursor(dictionary=True)
 
     sql = (
-        "SELECT course.cid as course_id, course.course_name as course_name, course.credit as course_credit, "
+        "SELECT course.cid as course_id,section.sec_id as sec_id ,course.course_name as course_name, course.credit as course_credit, "
         "timeslot.day as course_day, timeslot.start_time as course_start_time, timeslot.end_time as course_end_time, "
         "classroom.building_name as building_name, classroom.room_number as room_number, "
         "section.start_week as start_week, section.end_week as end_week "
@@ -392,19 +392,21 @@ def get_homework(sid, page: int, size: int):
     cursor.close()
     return courses, len(num)
 
-# 获取某个课程的学生列表，返回学生的id，姓名
-def get_course_students(tid, cid, page: int, size: int, filters: dict):
+# 获取某个课程的学生列表，返回学生的id，姓名,专业，院系，成绩
+def get_course_students(tid, sec_id, page: int, size: int, filters: dict):
     db = get_db()
     cursor = db.cursor(dictionary=True)
     sql = (
-        "SELECT student.sid as student_id, student.student_name as student_name "
+        "SELECT student.sid as student_id, student.student_name as student_name ,"
+        "major_name , dept_name as dept_name, student_section.score as score "
         "FROM student "
         "JOIN student_section ON student.sid = student_section.sid "
         "JOIN section ON student_section.sec_id = section.sec_id "
         "JOIN teacher_section ON section.sec_id = teacher_section.sec_id "
-        "where teacher_section.tid = %s and section.cid = %s "
+        "NATURAL JOIN major  NATURAL JOIN department "
+        "where teacher_section.tid = %s and section.sec_id = %s "
     )
-    params = [tid, cid]
+    params = [tid, sec_id]
     # 根据学期号过滤
     f1 = filters.get('semester_id')
     if f1:
@@ -423,21 +425,22 @@ def get_course_students(tid, cid, page: int, size: int, filters: dict):
     return courses, len(num)
 
 # 获取学生作业提交情况，返回学生id，姓名，作业id，作业内容，提交时间，可以在前端进行批改
-def get_homeworks(tid, cid, page: int, size: int, filters: dict):
+def get_homeworks(tid, sec_id, page: int, size: int, filters: dict):
     db = get_db()
     cursor = db.cursor(dictionary=True)
     sql = (
         "SELECT student.sid as student_id, student.student_name as student_name, "
         "homework_collection.homework_name as homework_name, "
         "homework_collection.content as content, "
-        "homework_collection.submit_time as submit_time "
+        "homework_collection.submit_time as submit_time,"
+        "homework_collection.score as score "
         "FROM student "
         "JOIN homework_collection ON student.sid = homework_collection.sid "
         "JOIN section ON homework_collection.sec_id = section.sec_id "
         "JOIN teacher_section ON section.sec_id = teacher_section.sec_id "
-        "where teacher_section.tid = %s and section.cid = %s "
+        "where teacher_section.tid = %s and section.sec_id = %s "
     )
-    params = [tid, cid]
+    params = [tid, sec_id]
     # 根据学期号过滤
     f1 = filters.get('semester_id')
     if f1:
@@ -864,7 +867,32 @@ def get_course(page: int, size: int):
     cursor.execute("SELECT count(*) as num FROM course")
     num = cursor.fetchone()
     # 获取课程信息
-    cursor.execute(f"SELECT * FROM course limit {size} offset {page*size}")
+    cursor.execute(f"SELECT * FROM course NATURAL JOIN department limit {size} offset {page*size}")
     courses = cursor.fetchall()
     cursor.close()
     return courses, num['num']
+
+#删除某一节课程,只能在没有学生选课的情况下删除
+def delete_course(sec_id):
+    db = get_db()
+    cursor = db.cursor()
+    # 检查是否有学生选课
+    cursor.execute("SELECT sid FROM student_section WHERE sec_id = %s", (sec_id,))
+    student = cursor.fetchone()
+    if student:
+        raise myException('Course has students.')
+    # 删除section
+    cursor.execute("DELETE FROM section WHERE sec_id = %s", (sec_id,))
+    db.commit()
+    cursor.close()
+
+#取消学生选课
+def delete_student_course(sid, sec_id):
+    db = get_db()
+    cursor = db.cursor()
+    # 删除student_section
+    cursor.execute("DELETE FROM student_section WHERE sid = %s AND sec_id = %s", (sid, sec_id))
+    # 更新section
+    cursor.execute("UPDATE section SET rest_number = rest_number + 1 WHERE sec_id = %s", (sec_id,))
+    db.commit()
+    cursor.close()

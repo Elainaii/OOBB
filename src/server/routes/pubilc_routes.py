@@ -73,7 +73,7 @@ def get_classroom():
 # 获取所有时间段
 @public_bp.route('/time_slot', methods=['GET'])
 def get_time_slot():
-    data = services.get_time_slot()
+    data = services.get_timeslot()
     return jsonify({'code': 0, 'message': 'success', 'data': data})
 
 # 获取所有课程，分页
