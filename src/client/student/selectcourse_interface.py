@@ -91,7 +91,7 @@ class SelectCourseTableView(TableView):
         # 获取选中的开课号
         sec_id = self.data[self.currentIndex().row()]['sec_id']
         self.select_course_message_box = SelectCourseMessageBox(self.controller, self.parent(), course_name, sec_id)
-        while self.select_course_message_box.exec() == 1:
+        if self.select_course_message_box.exec() == 1:
             data = {
                 'sec_id': sec_id
             }
@@ -116,6 +116,24 @@ class SelectCourseTableView(TableView):
                     duration=3000,
                     parent=self.parent()
                 )
+            # 刷新
+            self.controller.init_select_course()
+            self.reset()
+
+    def reset(self):
+        self.data = self.controller.select_course_list
+        self.model.removeRows(0, self.model.rowCount())
+        self.model.setHorizontalHeaderLabels(['课程号', '课程名', '上课地点', '教师', '开始周', '结束周', '学分', '上课时间'])
+        for i, row in enumerate(self.data):
+            self.model.setItem(i, 0, QStandardItem(str(row['course_id'])))
+            self.model.setItem(i, 1, QStandardItem(row['course_name']))
+            self.model.setItem(i, 2, QStandardItem(row['building_name'] +" "+ str(row['room_number'])))
+            self.model.setItem(i, 3, QStandardItem(row['teacher_name']))
+            self.model.setItem(i, 4, QStandardItem(str(row['start_week'])))
+            self.model.setItem(i, 5, QStandardItem(str(row['end_week'])))
+            self.model.setItem(i, 6, QStandardItem(str(row['course_credit'])))
+            self.model.setItem(i, 7, QStandardItem(str('周' + str(row['course_day']) +' '+ str(row['course_start_time']) + "-" + str(row['course_end_time']))))
+        self.resizeColumnsToContents()
 
 
 class SelectCourseCommandBar(CommandBar):
@@ -164,7 +182,7 @@ class SelectCourseInterface(ScrollArea):
         self.controller = controller
         self.commandBar = SelectCourseCommandBar(self.controller, self.view)
         self.table = SelectCourseTableView(self.controller, self.view)
-
+        self.commandBar.refresh.triggered.connect(self.refresh)
        # self.commandBar.search.textEdited.connect(lambda str1: self.table.agentModel.setFilterRegularExpression(str1))
 
         self.setWidget(self.view)
@@ -176,3 +194,7 @@ class SelectCourseInterface(ScrollArea):
         self.vBoxLayout.addWidget(self.commandBar, 0, Qt.AlignmentFlag.AlignTop)
         self.vBoxLayout.addWidget(self.table, 0)
         self.enableTransparentBackground()
+
+    def refresh(self):
+        self.controller.init_select_course()
+        self.table.reset()

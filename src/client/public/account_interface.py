@@ -7,14 +7,14 @@ from qfluentwidgets import FluentIcon, ScrollArea, BodyLabel, GroupHeaderCardWid
 # from src.client.admin.admin_main_window import *
 
 class ChangePasswordCard(GroupHeaderCardWidget):
-    def __init__(self, account_id, parent = None):
+    def __init__(self, controller, parent = None):
         super().__init__(parent)
         self.setTitle("修改密码")
         self.setBorderRadius(8)
 
         self.hintIcon = IconWidget(FluentIcon.INFO, self)
         # 设置ID:为当前用户的ID
-        self.idLabel = BodyLabel(f"ID: {account_id}")
+        self.idLabel = BodyLabel("ID")
         self.passwordEdit1 = PasswordLineEdit()
         self.passwordEdit2 = PasswordLineEdit()
         self.hintLabel = BodyLabel("点击按钮更改密码 👉")
@@ -38,7 +38,7 @@ class ChangePasswordCard(GroupHeaderCardWidget):
 
 
 class AccountInterface(ScrollArea):
-    def     __init__(self, account_id, parent=None):
+    def     __init__(self, controller, parent = None):
         super().__init__(parent)
 
         self.view = QWidget(self)
@@ -46,7 +46,7 @@ class AccountInterface(ScrollArea):
 
         self.settingLabel = SubtitleLabel(self.view)
         self.settingLabel.setText("设置")
-        self.changePasswordCard = ChangePasswordCard(account_id, self.view)
+        self.changePasswordCard = ChangePasswordCard(controller, self.view)
         self.logout = PrimaryPushSettingCard(
                         text="退出",
                         icon=FluentIcon.CLOSE,

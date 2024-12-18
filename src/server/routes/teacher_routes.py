@@ -205,3 +205,9 @@ def delete_student(section_id, sid):
     except Exception as e:
         return jsonify({'code': -1, 'message': str(e)})
     return jsonify({'code': 0, 'message': 'success'})
+
+# 获取教师的信息
+@teacher_bp.route('/teacher/<int:tid>/info', methods=['GET'])
+def get_teacher_info(tid):
+    data = services.get_teacher_info(tid)
+    return create_response(data, message='success', code=0)

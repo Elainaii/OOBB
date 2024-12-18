@@ -9,6 +9,7 @@ from src.client.admin.teacher_interface import TeacherInterface
 from src.client.admin.admin_interface import AdminInterface
 from src.client.public.account_interface import AccountInterface
 from src.client.admin.others_interface import OthersInterface
+from src.client.public.ai_interface import *
 
 class AdminMainWindow(MSFluentWindow):
     def __init__(self, account: Account = None, parent=None):
@@ -21,14 +22,17 @@ class AdminMainWindow(MSFluentWindow):
         self.teacherInterface.setObjectName("teacherInterface")
         self.adminInterface = AdminInterface( self.controller,self)
         self.adminInterface.setObjectName("adminInterface")
-        self.accountInterface = AccountInterface(account.id, self)
+        self.accountInterface = AccountInterface(self.controller, self)
         self.accountInterface.setObjectName("accountInterface")
         self.otherInterface = OthersInterface(self.controller,self)
         self.otherInterface.setObjectName("otherInterface")
+        self.AI = AiInterface(account.id, self)
+        self.AI.setObjectName("AI")
 
         self.addSubInterface(self.studentInterface, FluentIcon.PEOPLE, "学生", FluentIcon.PEOPLE, isTransparent=True)
         self.addSubInterface(self.teacherInterface, FluentIcon.PEOPLE, "教师", FluentIcon.PEOPLE, isTransparent=True)
         self.addSubInterface(self.adminInterface, FluentIcon.PEOPLE, "管理员", FluentIcon.PEOPLE, isTransparent=True)
+        self.addSubInterface(self.AI, FluentIcon.ROBOT, "AI", FluentIcon.ROBOT, isTransparent=True, position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.accountInterface, FluentIcon.PEOPLE, "账户", FluentIcon.PEOPLE, isTransparent=True, position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.otherInterface, FluentIcon.PEOPLE, "其他", FluentIcon.PEOPLE, isTransparent=True)
 

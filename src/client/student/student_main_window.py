@@ -7,6 +7,7 @@ from src.client.student.homework_interface import HomeworkInterface
 from src.client.student.mycourse_interface import *
 from src.client.student.selectcourse_interface import *
 
+from src.client.public.ai_interface import *
 
 class StudentMainWindow(MSFluentWindow):
     def __init__(self,account:Account = None, parent=None):
@@ -25,7 +26,8 @@ class StudentMainWindow(MSFluentWindow):
         self.accountInterface.setObjectName("accountInterface")
         self.homeworkInterface = HomeworkInterface(controller=self.controller, parent=self)
         self.homeworkInterface.setObjectName("homeworkInterface")
-
+        self.AI = AiInterface(account.id, self)
+        self.AI.setObjectName("AI")
 
 
         # add sub interfaces
@@ -34,6 +36,7 @@ class StudentMainWindow(MSFluentWindow):
         self.addSubInterface(self.selectCourseInterface, FluentIcon.ADD, "选课", FluentIcon.ADD_TO, isTransparent=True)
         self.addSubInterface(self.awardInterface, FluentIcon.FLAG, "奖励", FluentIcon.FLAG, isTransparent=True)
         self.addSubInterface(self.homeworkInterface, FluentIcon.DATE_TIME, "作业", FluentIcon.DATE_TIME, isTransparent=True)
+        self.addSubInterface(self.AI, FluentIcon.ROBOT, "AI", FluentIcon.ROBOT, isTransparent=True, position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.accountInterface, FluentIcon.PEOPLE, "账户", FluentIcon.PEOPLE, isTransparent=True, position=NavigationItemPosition.BOTTOM)
         #self.navigationInterface.addItem("editInterface", FluentIcon.EDIT, "编辑", selectable=False)
 
