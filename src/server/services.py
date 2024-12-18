@@ -1,6 +1,4 @@
 #负责对数据库进行操作
-from scipy.signal import qspline2d
-
 from db import *
 from exceptions import *
 from datetime import datetime
@@ -264,7 +262,7 @@ def get_courses(tid, page: int, size: int, filters: dict):
     cursor.close()
     return courses, len(num)
 
-# 获取学生已选择的课程信息,包括课程名，教师名，学分，学时，上课时间，上课地点，成绩
+# 获取学生已选择的课程信息,包括课程名，教师名，学分，学时，上课时间，上课地点
 def get_my_course_info(sid , page: int, size: int, filters: dict):
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -272,8 +270,7 @@ def get_my_course_info(sid , page: int, size: int, filters: dict):
         "SELECT course.cid as course_id, course.course_name as course_name, course.credit as course_credit, "
         "timeslot.day as course_day, timeslot.start_time as course_start_time, timeslot.end_time as course_end_time, "
         "classroom.building_name as building_name, classroom.room_number as room_number, "
-        "section.start_week as start_week, section.end_week as end_week, teacher.teacher_name as teacher_name,"
-        "student_section.score as score "
+        "section.start_week as start_week, section.end_week as end_week, teacher.teacher_name as teacher_name "
         "FROM course "
         "JOIN section ON course.cid = section.cid "
         "JOIN timeslot_classroom_section ON section.sec_id = timeslot_classroom_section.sec_id "
@@ -379,7 +376,7 @@ def get_selected_course(sid):
     cursor.close()
     return courses
 
-# 获取学生所有课程的作业，包括课程名，作业内容，截止时间，是否提交
+# 获取学生所有课程的作业，包括课程名，作业内容，截止时间
 def get_homework(sid, page: int, size: int):
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -389,12 +386,14 @@ def get_homework(sid, page: int, size: int):
     sql = (
         "SELECT course.cid as course_id, course.course_name as course_name, "
         "homework.homework_name as homework_name, homework.content as homework_content, homework.deadline as homework_deadline,"
-        "section.sec_id as sec_id, homework_collection.content as content "
-        "FROM course "
-        "JOIN section ON course.cid = section.cid "
-        "JOIN homework ON section.sec_id = homework.sec_id "
-        "JOIN homework_collection ON homework.sec_id = homework_collection.sec_id AND homework_collection.sid = %s AND homework.homework_name = homework_collection.homework_name "
-        "WHERE section.semester_id = %s "
+        "section.sec_id as sec_id "
+        "FROM course, section, homework, student_section "
+        "WHERE student_section.sid = %s "
+        "AND student_section.sec_id = section.sec_id "
+        "AND course.cid = section.cid "
+        "AND homework.sec_id = section.sec_id "
+        "AND section.semester_id = %s "
+
     )
     # 先获取总数
     cursor.execute(sql, (sid, semester['semester_id']))
@@ -506,27 +505,11 @@ def submit_homework(sid, data: dict):
     db = get_db()
     cursor = db.cursor()
     # 直接提交作业，注意分数是NULL
-    # 检查是否提交过，如果提交过，则会更新
-    sql0 = (
-        "SELECT sid "
-        "FROM homework_collection "
-        "WHERE sid = %s AND sec_id = %s "
-        "AND homework_name = %s "
-    )
-    cursor.execute(sql0, (sid, data['sec_id'], data['homework_name']))
-    sid = cursor.fetchone()
-    sql1 = (
+    sql = (
         "INSERT INTO homework_collection VALUES (%s, %s, %s, %s, %s, NULL)"
     )
-    sql2 = (
-        "UPDATE homework_collection SET content = %s, submit_time = %s "
-        "WHERE sid = %s AND sec_id = %s AND homework_name = %s"
-    )
 
-    if sid:
-        cursor.execute(sql2, (data['content'], datetime.now(), sid, data['sec_id'], data['homework_name']))
-    else:
-        cursor.execute(sql1, (sid, data['sec_id'], data['homework_name'], data['content'], datetime.now()))
+    cursor.execute(sql, (sid, data['sec_id'], data['homework_name'], datetime.now(), data['homework_content']))
     db.commit()
     cursor.close()
 
@@ -766,10 +749,7 @@ def check_course(tid, data: dict):
     cursor = db.cursor()
     # 检查时间和教室是否冲突
     # 如果冲突，返回False,否则返回True
-    # 获取当前学期
-    cursor.execute("SELECT max(semester_id) as semester_id FROM semester")
-    semester = cursor.fetchone()
-    semester_id = semester['semester_id']
+    semester_id = data['semester_id']
     timeslot_id = data['timeslot_id']
     classroom_id = data['classroom_id']
 

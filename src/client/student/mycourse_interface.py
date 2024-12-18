@@ -1,17 +1,10 @@
-from math import copysign
-from msilib.schema import ComboBox, CheckBox
+from PySide6.QtGui import QIcon, QStandardItem, QStandardItemModel, QActionGroup
+from PySide6.QtCore import Qt, QSortFilterProxyModel,QAbstractItemModel
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QAbstractItemView,QSizePolicy,QTableView,QHeaderView
 
-from PySide6.QtGui import QIcon, QStandardItem, QStandardItemModel, QActionGroup, QCursor,QAction
-from PySide6.QtCore import Qt, QSortFilterProxyModel, QAbstractItemModel, Signal
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QAbstractItemView, QSizePolicy, QTableView, QHeaderView, \
-    QButtonGroup, QHBoxLayout, QFileDialog
-
-from qfluentwidgets import (ScrollArea, MSFluentWindow, FluentIcon, NavigationItemPosition, CommandBar, Action, \
-                            SearchLineEdit, TableView, CaptionLabel, LineEdit, TransparentDropDownPushButton, setFont,
-                            RoundMenu, \
-                            TogglePushButton, CheckableMenu, MenuIndicatorType, ElevatedCardWidget, MessageBoxBase,
-                            SubtitleLabel, DatePicker,
-                            ComboBox, CheckBox, RadioButton, InfoBar, InfoBarPosition)
+from qfluentwidgets import ScrollArea, MSFluentWindow, FluentIcon, NavigationItemPosition, CommandBar, Action, \
+    SearchLineEdit, TableView, CaptionLabel, LineEdit, TransparentDropDownPushButton, setFont, RoundMenu, \
+    TogglePushButton, CheckableMenu, MenuIndicatorType, ElevatedCardWidget
 
 from src.client.core.account import *
 
@@ -38,10 +31,9 @@ class MyCourseTableView(TableView):
             self.model.setItem(i, 5, QStandardItem(str(row['end_week'])))
             self.model.setItem(i, 6, QStandardItem(str(row['course_credit'])))
             self.model.setItem(i, 7, QStandardItem(str('周' + str(row['course_day']) +' '+ str(row['course_start_time']) + "-" + str(row['course_end_time']))))
-            self.model.setItem(i, 8, QStandardItem(str(row['score'])))
 
 
-        self.model.setHorizontalHeaderLabels(['课程号', '课程名', '上课地点', '教师', '开始周', '结束周', '学分', '上课时间', '成绩'])
+        self.model.setHorizontalHeaderLabels(['课程号', '课程名', '上课地点', '教师', '开始周', '结束周', '学分', '上课时间'])
         self.agentModel = QSortFilterProxyModel()
         self.agentModel.setSourceModel(self.model)
         self.agentModel.setFilterKeyColumn(-1)
@@ -65,7 +57,6 @@ class MyCourseTableView(TableView):
             self.model.setItem(i, 5, QStandardItem(str(row['end_week'])))
             self.model.setItem(i, 6, QStandardItem(str(row['course_credit'])))
             self.model.setItem(i, 7, QStandardItem(str('周' + str(row['course_day']) +' '+ str(row['course_start_time']) + "-" + str(row['course_end_time']))))
-            self.model.setItem(i, 8, QStandardItem(str(row['score'])))
         self.agentModel.setSourceModel(self.model)
 
 class MyCourseFilterMenu(TransparentDropDownPushButton):
@@ -138,10 +129,8 @@ class MyCousreCommandBar(CommandBar):
         self.share = Action(FluentIcon.SHARE, "导出", self)
         self.addAction(self.share)
         self.addSeparator()
-        self.up = Action(FluentIcon.UP, "")
-        self.down = Action(FluentIcon.DOWN, "")
-        self.addAction(self.up)
-        self.addAction(self.down)
+        self.addAction(Action(FluentIcon.UP, "", self))
+        self.addAction(Action(FluentIcon.DOWN, "", self))
 
         self.pageLabel1 = CaptionLabel()
         self.pageLabel1.setText("当前第")
@@ -177,12 +166,8 @@ class MyCourseInterface(ScrollArea):
 
         self.commandBar = MyCousreCommandBar(self.controller,self.view)
         self.table = MyCourseTableView(self.controller,self)
-        self.commandBar.up.triggered.connect(self.prev_page)
-        self.commandBar.down.triggered.connect(self.next_page)
         self.commandBar.refresh.triggered.connect(self.refresh)
         self.commandBar.share.triggered.connect(self.share)
-        self.commandBar.pageEdit.textEdited.connect(self.change_page)
-        self.commandBar.pageLabel2.setText("页,共" + str(self.controller.course_total_page) + "页")
         # 筛选完毕后直接刷新
         self.commandBar.filterMenu.action1.triggered.connect(self.refresh)
         self.commandBar.filterMenu.action2.triggered.connect(self.refresh)
@@ -202,40 +187,6 @@ class MyCourseInterface(ScrollArea):
         self.vBoxLayout.addWidget(self.table, 0)
         self.enableTransparentBackground()
 
-    def prev_page(self):
-        status, msg = self.controller.mycourse_prev_page()
-        if status:
-            self.table.reset()
-            self.commandBar.pageEdit.setText(str(self.controller.course_curr_page))
-        else:
-            InfoBar.error(
-                title='错误',
-                content=msg,
-                orient=Qt.Vertical,
-                isClosable=True,
-                position=InfoBarPosition.TOP_RIGHT,
-                duration=3000,
-                parent=self
-            )
-        return
-
-    def next_page(self):
-        status, msg = self.controller.mycourse_next_page()
-        if status:
-            self.table.reset()
-            self.commandBar.pageEdit.setText(str(self.controller.course_curr_page))
-        else:
-            InfoBar.error(
-                title='错误',
-                content=msg,
-                orient=Qt.Vertical,
-                isClosable=True,
-                position=InfoBarPosition.TOP_RIGHT,
-                duration=3000,
-                parent=self
-            )
-        return
-
     def refresh(self):
         print(self.commandBar.filterMenu.get_semester(self.controller.account.curr_semester))
         self.controller.set_my_course_filter(self.commandBar.filterMenu.get_semester(self.controller.account.curr_semester), self.commandBar.filterMenu.get_status(), '')
@@ -245,22 +196,3 @@ class MyCourseInterface(ScrollArea):
     def share(self):
         pass
 
-    def change_page(self):
-        if self.commandBar.pageEdit.text() == '':
-            return
-        page_number = int(self.commandBar.pageEdit.text())
-        if page_number<0 or page_number>self.controller.course_total_page-1:
-            InfoBar.error(
-                title='错误',
-                content="页数超出范围",
-                orient=Qt.Vertical,
-                isClosable=True,
-                position=InfoBarPosition.TOP_RIGHT,
-                duration=3000,
-                parent=self
-            )
-            return
-        self.controller.course_curr_page = page_number
-        self.controller.init_course_list()
-        self.table.reset()
-        return
