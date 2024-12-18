@@ -60,7 +60,7 @@ def check_course(tid):
     data = {
         'semester_id': semester_id,
         'classroom_id': classroom_id,
-        'time_slot_id': time_slot_id,
+        'timeslot_id': time_slot_id,
         'sec_id': sec_id
     }
     flag = services.check_course(tid, data)
@@ -97,6 +97,12 @@ def add_homework(tid, sec_id):
         return jsonify({'code': -1, 'message': str(e)})
     return jsonify({'code': 0, 'message': 'success','data':data})
 
+#获取某个课程的作业列表，返回作业id，作业名字，截止时间
+@teacher_bp.route('/teacher/<int:tid>/courses/<int:sec_id>/homework', methods=['GET'])
+def get_homework(tid, sec_id):
+    # 前端传入的参数：学期、作业名字，分页信息
+    data= services.get_homework_section(tid, sec_id)
+    return jsonify({'code': 0, 'message': 'success','data': data})
 
 #查看学生作业提交情况，返回学生id，姓名，作业id，作业内容，提交时间，可以在前端进行批改
 @teacher_bp.route('/teacher/<int:tid>/courses/<int:sec_id>/homeworks', methods=['GET'])

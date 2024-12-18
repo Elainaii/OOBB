@@ -230,7 +230,8 @@ def get_courses(tid, page: int, size: int, filters: dict):
         "SELECT course.cid as course_id,section.sec_id as sec_id ,course.course_name as course_name, course.credit as course_credit, "
         "timeslot.day as course_day, timeslot.start_time as course_start_time, timeslot.end_time as course_end_time, "
         "classroom.building_name as building_name, classroom.room_number as room_number, "
-        "section.start_week as start_week, section.end_week as end_week "
+        "section.start_week as start_week, section.end_week as end_week, "
+        "year , season "
         "FROM teacher "
         "JOIN teacher_section ON teacher.tid = teacher_section.tid "
         "JOIN section ON teacher_section.sec_id = section.sec_id "
@@ -238,6 +239,7 @@ def get_courses(tid, page: int, size: int, filters: dict):
         "JOIN timeslot_classroom_section ON section.sec_id = timeslot_classroom_section.sec_id "
         "JOIN timeslot ON timeslot_classroom_section.timeslot_id = timeslot.timeslot_id "
         "JOIN classroom ON timeslot_classroom_section.classroom_id = classroom.classroom_id "
+        "NATURAL JOIN semester "
         "WHERE teacher.tid = %s "
     )
     params = [tid]
@@ -728,7 +730,7 @@ def add_homework(data: dict):
     db = get_db()
     cursor = db.cursor()
     # 添加作业
-    cursor.execute("INSERT INTO homework VALUES (%s, %s, %s, %s)", (data['sec_id'], data['homework_name'], data['homework_content'], data['deadline']))
+    cursor.execute("INSERT INTO homework VALUES (%s, %s, %s, %s)", (data['sec_id'], data['homework_name'], data['deadline'], data['homework_content']))
     db.commit()
     cursor.close()
 
@@ -769,7 +771,7 @@ def check_course(tid, data: dict):
     # 获取当前学期
     cursor.execute("SELECT max(semester_id) as semester_id FROM semester")
     semester = cursor.fetchone()
-    semester_id = semester['semester_id']
+    semester_id = semester[0]
     timeslot_id = data['timeslot_id']
     classroom_id = data['classroom_id']
 
@@ -892,3 +894,17 @@ def delete_student_course(sid, sec_id):
     cursor.execute("UPDATE section SET rest_number = rest_number + 1 WHERE sec_id = %s", (sec_id,))
     db.commit()
     cursor.close()
+
+#获取某一节课程的作业
+def get_homework_section(tid, sec_id):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    sql = (
+        "SELECT homework_name, content, deadline "
+        "FROM homework "
+        "WHERE sec_id = %s"
+    )
+    cursor.execute(sql, (sec_id,))
+    homeworks = cursor.fetchall()
+    cursor.close()
+    return homeworks

@@ -15,6 +15,37 @@ from qfluentwidgets import (ScrollArea, MSFluentWindow, FluentIcon, NavigationIt
 from src.client.core.account import TeacherController
 
 
+class AddHomeworkMessageBox(MessageBoxBase):
+    def __init__(self,controller:TeacherController,parent=None):
+        super().__init__(parent)
+        #传入的参数：sec_id 作业名字 作业内容 截止时间
+        self.controller = controller
+        controller.get_homework_list_section()
+        self.titleLabel = SubtitleLabel('添加作业')
+        self.hintLabel = CaptionLabel('查看目前的作业信息')
+        self.prevHomeworkComboBox = ComboBox()
+        for i in controller.homework_list_section:
+            self.prevHomeworkComboBox.addItem(i['homework_name']+":"+i['content'])
+
+        self.hintLabel2 = CaptionLabel('或者布置一门新的作业')
+        self.homeworkNameLineEdit = LineEdit()
+        self.homeworkNameLineEdit.setPlaceholderText("请输入作业名称")
+        self.homeworkContentLineEdit = LineEdit()
+        self.homeworkContentLineEdit.setPlaceholderText("请输入作业内容")
+        self.hintLabel3 = CaptionLabel('截止时间')
+        self.deadlineDatePicker = DatePicker()
+
+        self.viewLayout.addWidget(self.titleLabel)
+        self.viewLayout.addWidget(self.hintLabel)
+        self.viewLayout.addWidget(self.prevHomeworkComboBox)
+        self.viewLayout.addWidget(self.hintLabel2)
+        self.viewLayout.addWidget(self.homeworkNameLineEdit)
+        self.viewLayout.addWidget(self.homeworkContentLineEdit)
+        self.viewLayout.addWidget(self.hintLabel3)
+        self.viewLayout.addWidget(self.deadlineDatePicker)
+        self.setMinimumWidth(350)
+
+
 class SetCourseGradeMessageBox(MessageBoxBase):
     def __init__(self,controller:TeacherController,parent=None):
         super().__init__(parent)
@@ -89,7 +120,7 @@ class MyCourseHomeworkCommandBar(CommandBar):
         self.pageEdit.setText('0')
         self.pageEdit.setFixedWidth(50)  # 连接时要设置宽度
         self.pageLabel2 = CaptionLabel()
-        self.pageLabel2.setText("页,共??页")
+        self.pageLabel2.setText(f"页,共{self.controller.homework_total_page}页")
 
         self.addWidget(self.pageLabel1)
         self.addWidget(self.pageEdit)
@@ -140,7 +171,7 @@ class MyCourseHomeworkTableView(TableView):
         self.copyAction = Action(FluentIcon.COPY, '复制', triggered=lambda: print("复制成功"))
         # self.deleteAction = Action(FluentIcon.DELETE, '删除', triggered=lambda: print("删除成功"))
         self.gradeAction = Action(FluentIcon.EDIT, '设置分数',triggered = self.submit_grade)
-        self.awardAction = Action(FluentIcon.PEOPLE, '设置奖惩', triggered=lambda: print("查看学生"))
+
 
 
     def reset(self):
@@ -245,7 +276,7 @@ class MyCourseStudentCommandBar(CommandBar):
         self.pageEdit.setText('0')
         self.pageEdit.setFixedWidth(50)  # 连接时要设置宽度
         self.pageLabel2 = CaptionLabel()
-        self.pageLabel2.setText("页,共??页")
+        self.pageLabel2.setText(f"页,共{self.controller.student_total_page}页")
 
         self.addWidget(self.pageLabel1)
         self.addWidget(self.pageEdit)
@@ -261,6 +292,7 @@ class MyCourseStudentCommandBar(CommandBar):
 class MyCourseStudentTableView(TableView):
     def __init__(self,controller:TeacherController,parent = None):
         super().__init__(parent)
+        self.parent = parent
         self.controller = controller
         controller.get_course_students()
         self.data = controller.student_list
@@ -295,7 +327,7 @@ class MyCourseStudentTableView(TableView):
         self.copyAction = Action(FluentIcon.COPY, '复制', triggered=lambda: print("复制成功"))
         # self.deleteAction = Action(FluentIcon.DELETE, '删除', triggered=lambda: print("删除成功"))
         self.gradeAction = Action(FluentIcon.EDIT, '设置分数', triggered=self.setGrade)
-        self.awardAction = Action(FluentIcon.PEOPLE, '设置奖惩', triggered=lambda: print("查看学生"))
+        self.awardAction = Action(FluentIcon.PEOPLE, '设置奖惩', triggered=self.setReward)
 
 
     def reset(self):
@@ -327,9 +359,58 @@ class MyCourseStudentTableView(TableView):
             #menu.addAction(QAction('全选', shortcut='Ctrl+A'))
         self.menu.exec(QCursor.pos())
 
+
+    def setReward(self):
+        self.controller.curr_student_id = self.controller.student_list[self.currentIndex().row()]['student_id']
+        self.rewardMessageBox = SetRewardMessageBox(self.controller,self.parent)
+        self.rewardMessageBox.sidLineEdit.setText(str(self.controller.curr_student_id))
+        while self.rewardMessageBox.exec():
+            reward = self.rewardMessageBox.rewardLineEdit.text()
+            reward_content = self.rewardMessageBox.rewardContentLineEdit.text()
+            if reward and reward_content:
+                data ={
+                    'sid':self.controller.curr_student_id,
+                    'award_name':reward,
+                    'award_content':reward_content
+                }
+                status,msg = self.controller.set_reward(data)
+                if status:
+                    InfoBar.success(
+                        title='成功',
+                        content=msg,
+                        orient=Qt.Vertical,
+                        isClosable=True,
+                        position=InfoBarPosition.TOP,
+                        duration=3000,
+                        parent=self.parent
+                    )
+                    #self.controller.get_course_students()
+                    #self.reset()
+                    break
+                else:
+                    InfoBar.error(
+                        title='错误',
+                        content=msg,
+                        orient=Qt.Vertical,
+                        isClosable=True,
+                        position=InfoBarPosition.TOP,
+                        duration=3000,
+                        parent=self.parent()
+                    )
+            else:
+                InfoBar.error(
+                    title='错误',
+                    content="请输入奖惩和奖惩内容",
+                    orient=Qt.Vertical,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self.parent()
+                )
+
     def setGrade(self):
         self.controller.curr_student_id = self.controller.student_list[self.currentIndex().row()]['student_id']
-        self.gradeMessageBox = SetCourseGradeMessageBox(self.controller,self.parent())
+        self.gradeMessageBox = SetCourseGradeMessageBox(self.controller,self.parent().parent())
         self.gradeMessageBox.sidLineEdit.setText(str(self.controller.curr_student_id))
         while self.gradeMessageBox.exec():
             grade = self.gradeMessageBox.gradeLineEdit.text()
@@ -387,16 +468,17 @@ class MyCourseTableView(TableView):
         for i, row in enumerate(self.data):
             self.model.setItem(i, 0, QStandardItem(str(row['course_id'])))
             self.model.setItem(i, 1, QStandardItem(str(row['sec_id'])))
-            self.model.setItem(i, 2, QStandardItem(row['course_name']))
-            self.model.setItem(i, 3, QStandardItem(row['building_name'] + " " + str(row['room_number'])))
-            self.model.setItem(i, 4, QStandardItem(str(row['start_week'])))
-            self.model.setItem(i, 5, QStandardItem(str(row['end_week'])))
-            self.model.setItem(i, 6, QStandardItem(str(row['course_credit'])))
-            self.model.setItem(i, 7, QStandardItem(
+            self.model.setItem(i, 2, QStandardItem(str(row['year']) + " " + str(row['season'])))
+            self.model.setItem(i, 3, QStandardItem(row['course_name']))
+            self.model.setItem(i, 4, QStandardItem(row['building_name'] + " " + str(row['room_number'])))
+            self.model.setItem(i, 5, QStandardItem(str(row['start_week'])))
+            self.model.setItem(i, 6, QStandardItem(str(row['end_week'])))
+            self.model.setItem(i, 7, QStandardItem(str(row['course_credit'])))
+            self.model.setItem(i, 8, QStandardItem(
                 str('周' + str(row['course_day']) + ' ' + str(row['course_start_time']) + "-" + str(
                     row['course_end_time']))))
 
-        self.model.setHorizontalHeaderLabels(['课程id','开课id','名称', '上课地址', '开始周数','结束周数','学分','时间'])
+        self.model.setHorizontalHeaderLabels(['课程id','开课id','学期','名称', '上课地址', '开始周数','结束周数','学分','时间'])
 
         self.agentModel = QSortFilterProxyModel()
         self.agentModel.setSourceModel(self.model)
@@ -417,7 +499,8 @@ class MyCourseTableView(TableView):
 
         self.copyAction = Action(FluentIcon.COPY, '复制', triggered=lambda: print("复制成功"))
         # self.deleteAction = Action(FluentIcon.DELETE, '删除', triggered=lambda: print("删除成功"))
-        self.homeworkAction = Action(FluentIcon.EDIT, '查看作业', triggered=lambda: print("查看作业"))
+        self.homeworkAction = Action(FluentIcon.EDIT, '批改作业')
+        self.addHomeworkAction = Action(FluentIcon.ADD, '布置作业')
         self.studentAction = Action(FluentIcon.PEOPLE, '查看学生')
         self.infoAction = Action(FluentIcon.LABEL, '修改信息', triggered=lambda: print("修改信息"))
 
@@ -428,12 +511,13 @@ class MyCourseTableView(TableView):
         for i, row in enumerate(self.data):
             self.model.setItem(i, 0, QStandardItem(str(row['course_id'])))
             self.model.setItem(i, 1, QStandardItem(str(row['sec_id'])))
-            self.model.setItem(i, 2, QStandardItem(row['course_name']))
-            self.model.setItem(i, 3, QStandardItem(row['building_name'] + " " + str(row['room_number'])))
-            self.model.setItem(i, 4, QStandardItem(str(row['start_week'])))
-            self.model.setItem(i, 5, QStandardItem(str(row['end_week'])))
-            self.model.setItem(i, 6, QStandardItem(str(row['course_credit'])))
-            self.model.setItem(i, 7, QStandardItem(
+            self.model.setItem(i, 2, QStandardItem(str(row['year']) + " " + str(row['season'])))
+            self.model.setItem(i, 3, QStandardItem(row['course_name']))
+            self.model.setItem(i, 4, QStandardItem(row['building_name'] + " " + str(row['room_number'])))
+            self.model.setItem(i, 5, QStandardItem(str(row['start_week'])))
+            self.model.setItem(i, 6, QStandardItem(str(row['end_week'])))
+            self.model.setItem(i, 7, QStandardItem(str(row['course_credit'])))
+            self.model.setItem(i, 8, QStandardItem(
                 str('周' + str(row['course_day']) + ' ' + str(row['course_start_time']) + "-" + str(
                     row['course_end_time']))))
         self.agentModel.setSourceModel(self.model)
@@ -448,6 +532,7 @@ class MyCourseTableView(TableView):
 
 
             self.menu.addAction(self.copyAction)
+            self.menu.addAction(self.addHomeworkAction)
             self.menu.addAction(self.homeworkAction)
             self.menu.addAction(self.studentAction)
             self.menu.addAction(self.infoAction)
@@ -481,7 +566,7 @@ class MyCourseCommandBar(CommandBar):
         self.pageEdit.setText('0')
         self.pageEdit.setFixedWidth(50)  # 连接时要设置宽度
         self.pageLabel2 = CaptionLabel()
-        self.pageLabel2.setText("页,共??页")
+        self.pageLabel2.setText(f"页,共{self.controller.course_total_page}页")
 
         self.addWidget(self.pageLabel1)
         self.addWidget(self.pageEdit)
@@ -572,6 +657,9 @@ class MyCourseInterface(ScrollArea):
 
         self.bindCourseStudent()
         self.bindCourseHomework()
+        self.bindCommandBar()
+        self.table.addHomeworkAction.triggered.connect(self.open_homework_box)
+
 
     def bindCourseStudent(self):
         self.table.studentAction.triggered.connect(self.openCourseStudent)
@@ -588,6 +676,7 @@ class MyCourseInterface(ScrollArea):
         self.controller.get_course_students()
         self.tableStudent.reset()
         self.breadcrumbBar.addItem(self.myCourseStudent.objectName(), "学生管理")
+        self.commandBarStudent.pageLabel2.setText(f"页,共{self.controller.student_total_page}页")
 
     def openCourseHomework(self):
         self.stack.setCurrentWidget(self.myCourseHomework)
@@ -595,5 +684,218 @@ class MyCourseInterface(ScrollArea):
         self.controller.get_homework_list()
         self.tableHomework.reset()
         self.breadcrumbBar.addItem(self.myCourseHomework.objectName(), "作业管理")
+        self.commandBarHomework.pageLabel2.setText(f"页,共{self.controller.homework_total_page}页")
+
+    def bindCommandBar(self):
+        self.commandBar.pageEdit.textEdited.connect(self.my_course_change_page)
+        self.commandBar.up.triggered.connect(self.my_course_prev_page)
+        self.commandBar.down.triggered.connect(self.my_course_next_page)
+        self.commandBarHomework.pageEdit.textEdited.connect(self.course_homework_change_page)
+        self.commandBarHomework.up.triggered.connect(self.course_homework_prev_page)
+        self.commandBarHomework.down.triggered.connect(self.course_homework_next_page)
+        self.commandBarStudent.pageEdit.textEdited.connect(self.course_student_change_page)
+        self.commandBarStudent.up.triggered.connect(self.course_student_prev_page)
+        self.commandBarStudent.down.triggered.connect(self.course_student_next_page)
+
+        self.commandBar.pageLabel2.setText(f"页,共{self.controller.course_total_page}页")
 
 
+#下面全是重复的屎山代码
+
+    def my_course_next_page(self):
+        status ,msg = self.controller.course_next_page()
+        if status:
+            self.table.reset()
+            self.commandBar.pageEdit.setText(str(self.controller.course_curr_page))
+        else:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.parent()
+            )
+
+    def my_course_prev_page(self):
+        status ,msg = self.controller.course_prev_page()
+        if status:
+            self.table.reset()
+            self.commandBar.pageEdit.setText(str(self.controller.course_curr_page))
+        else:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.parent()
+            )
+
+    def my_course_change_page(self):
+        page = self.commandBar.pageEdit.text()
+        if page == '':
+            return
+        status ,msg = self.controller.course_change_page(int(page))
+        if status:
+            self.table.reset()
+            self.commandBar.pageEdit.setText(str(self.controller.course_curr_page))
+        else:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.parent()
+            )
+
+    def course_homework_next_page(self):
+        status ,msg = self.controller.homework_next_page()
+        if status:
+            self.tableHomework.reset()
+            self.commandBarHomework.pageEdit.setText(str(self.controller.homework_curr_page))
+        else:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.parent()
+            )
+
+    def course_homework_prev_page(self):
+        status ,msg = self.controller.homework_prev_page()
+        if status:
+            self.tableHomework.reset()
+            self.commandBarHomework.pageEdit.setText(str(self.controller.homework_curr_page))
+        else:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.parent()
+            )
+
+    def course_homework_change_page(self):
+        page = self.commandBarHomework.pageEdit.text()
+        status ,msg = self.controller.homework_change_page(int(page))
+        if status:
+            self.tableHomework.reset()
+            self.commandBarHomework.pageEdit.setText(str(self.controller.homework_curr_page))
+        else:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.parent()
+            )
+
+    def course_student_next_page(self):
+        status ,msg = self.controller.student_next_page()
+        if status:
+            self.tableStudent.reset()
+            self.commandBarStudent.pageEdit.setText(str(self.controller.student_curr_page))
+        else:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.parent()
+            )
+
+    def course_student_prev_page(self):
+        status ,msg = self.controller.student_prev_page()
+        if status:
+            self.tableStudent.reset()
+            self.commandBarStudent.pageEdit.setText(str(self.controller.student_curr_page))
+        else:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.parent()
+            )
+
+    def course_student_change_page(self):
+        page = self.commandBarStudent.pageEdit.text()
+        status ,msg = self.controller.student_change_page(int(page))
+        if status:
+            self.tableStudent.reset()
+            self.commandBarStudent.pageEdit.setText(str(self.controller.student_curr_page))
+        else:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.parent()
+            )
+
+    def open_homework_box(self):
+        self.controller.curr_course_id = self.controller.course_list[self.table.currentIndex().row()]['sec_id']
+        self.homework = AddHomeworkMessageBox(self.controller,self)
+        while self.homework.exec():
+            homework_name = self.homework.homeworkNameLineEdit.text()
+            homework_content = self.homework.homeworkContentLineEdit.text()
+            deadline = self.homework.deadlineDatePicker.date.toString("yyyy-MM-dd")
+            if not homework_name or not homework_content or not deadline:
+                InfoBar.error(
+                    title='错误',
+                    content="请填写完整信息",
+                    orient=Qt.Vertical,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self.parent()
+                )
+                continue
+            data = {
+                "sec_id":self.controller.curr_course_id,
+                "homework_name":homework_name,
+                "homework_content":homework_content,
+                "deadline":deadline
+            }
+            status,msg = self.controller.add_homework(data)
+            if status:
+                InfoBar.success(
+                    title='成功',
+                    content=msg,
+                    orient=Qt.Vertical,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self.parent()
+                )
+                self.controller.get_homework_list()
+                self.tableHomework.reset()
+                break
+            else:
+                InfoBar.error(
+                    title='错误',
+                    content=msg,
+                    orient=Qt.Vertical,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self.parent()
+                )

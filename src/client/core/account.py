@@ -550,6 +550,29 @@ class TeacherController():
         else:
             return False,r.json()['message']
 
+    def course_next_page(self):
+        if self.course_curr_page + 1 < self.course_total_page:
+            self.course_curr_page += 1
+            self.get_course_list()
+            return True,'Get course list success.'
+        else:
+            return False,"已经是最后一页了"
+
+    def course_prev_page(self):
+        if self.course_curr_page - 1 >= 0:
+            self.course_curr_page -= 1
+            self.get_course_list()
+            return True,'Get course list success.'
+        else:
+            return False,"已经是第一页了"
+
+    def course_change_page(self,page):
+        if page < 0 or page >= self.course_total_page:
+            return False,"页数超出范围"
+        self.course_curr_page = page
+        self.get_course_list()
+        return True,'Get course list success.'
+
     def get_homework_list(self):
         try:
             r = requests.get(Config.API_BASE_URL + f"/teacher/{self.account.id}/courses/{self.curr_course_id}/homeworks?size=12&page={self.homework_curr_page}", timeout=2)
@@ -671,20 +694,50 @@ class TeacherController():
     def reset_course_time_list(self):
         self.time_classroom_list = list()
 
-    def add_course_time_list(self,time_slot_id,classroom_id):
-        time_slot_ids = [entry['time_slot_id'] for entry in self.time_classroom_list]
-        if time_slot_id  in time_slot_ids:
-            return False,"Time slot exists."
-        # 然后检查教室、时间段是否冲突
+    def add_course_time_list(self,time_slot_id,classroom_id,begin_week,end_week):
+        # 检查时间段是否重复
+        if begin_week =='' or end_week == '':
+            return False,"Week should not be empty."
+        try:
+            begin_week = int(begin_week)
+            end_week = int(end_week)
+        except:
+            return False,"Week should be a number."
+
+        if begin_week > end_week:
+            return False,"Begin week should be less than end week."
+        if begin_week < 1 or end_week > 20:
+            return False,"Week should be in range 1-20."
+
+        for course_time in self.time_classroom_list:
+            if course_time['time_slot_id'] == time_slot_id :
+                if not (end_week < course_time['begin_week'] or begin_week > course_time['end_week']):
+                    return False, "Time slot overlaps with your existing course."
+        #向后端发送请求，检查是否冲突
+        try:
+            r = requests.get(Config.API_BASE_URL + f"/teacher/{self.account.id}/courses/check?time_slot_id={time_slot_id}&classroom_id={classroom_id}&begin_week={begin_week}&end_week={end_week}", timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+        if r.json()['code'] != 0:
+            return False,r.json()['message']
+
+        if not r.json()['valid']:
+            return False,'Time slot overlaps with an existing course.'
+
         self.time_classroom_list.append({
             'time_slot_id':time_slot_id,
-            'classroom_id':classroom_id
+            'classroom_id':classroom_id,
+            'begin_week':begin_week,
+            'end_week':end_week
         })
         return True,"Add course time success."
 
-    def del_course_time_list(self, time_slot_id, classroom_id):
-        if {'time_slot_id':time_slot_id,'classroom_id':classroom_id} in self.time_classroom_list:
-            self.time_classroom_list.remove({'time_slot_id':time_slot_id,'classroom_id':classroom_id})
+    def del_course_time_list(self, time_slot_id, classroom_id,begin_week,end_week):
+        if {'time_slot_id':time_slot_id,'classroom_id':classroom_id,'begin_week':begin_week,'end_week':end_week} in self.time_classroom_list:
+            self.time_classroom_list.remove({'time_slot_id':time_slot_id,'classroom_id':classroom_id,'begin_week':begin_week,'end_week':end_week})
             return True,"Delete course time success."
         else:
             return False,"Course time not exists."
@@ -706,6 +759,104 @@ class TeacherController():
             return True,"Submit course success."
         else:
             return False,r.json()['message']
+
+    def homework_next_page(self):
+        if self.homework_curr_page + 1 < self.homework_total_page:
+            self.homework_curr_page += 1
+            self.get_homework_list()
+            return True,'Get homework list success.'
+        else:
+            return False,"已经是最后一页了"
+
+    def homework_prev_page(self):
+        if self.homework_curr_page - 1 >= 0:
+            self.homework_curr_page -= 1
+            self.get_homework_list()
+            return True,'Get homework list success.'
+        else:
+            return False,"已经是第一页了"
+
+    def homework_change_page(self,page):
+        if page < 0 or page >= self.homework_total_page:
+            return False,"页数超出范围"
+        self.homework_curr_page = page
+        self.get_homework_list()
+        return True,'Get homework list success.'
+
+    def student_next_page(self):
+        if self.student_curr_page + 1 < self.student_total_page:
+            self.student_curr_page += 1
+            self.get_course_students()
+            return True,'Get student list success.'
+        else:
+            return False,"已经是最后一页了"
+
+    def student_prev_page(self):
+        if self.student_curr_page - 1 >= 0:
+            self.student_curr_page -= 1
+            self.get_course_students()
+            return True,'Get student list success.'
+        else:
+            return False,"已经是第一页了"
+
+    def student_change_page(self,page):
+        if page < 0 or page >= self.student_total_page:
+            return False,"页数超出范围"
+        self.student_curr_page = page
+        self.get_course_students()
+        return True,'Get student list success.'
+
+    def course_list_change_page(self,page):
+        if page < 0 or page >= self.all_course_total_page:
+            return False,"页数超出范围"
+        self.all_course_curr_page = page
+        self.get_all_course_list()
+        return True,'Get course list success.'
+
+    def course_list_next_page(self):
+        if self.all_course_curr_page + 1 < self.all_course_total_page:
+            self.all_course_curr_page += 1
+            self.get_all_course_list()
+            return True,'Get course list success.'
+        else:
+            return False,"已经是最后一页了"
+
+    def course_list_prev_page(self):
+        if self.all_course_curr_page - 1 >= 0:
+            self.all_course_curr_page -= 1
+            self.get_all_course_list()
+            return True,'Get course list success.'
+        else:
+            return False,"已经是第一页了"
+
+    def add_homework(self, data):
+        try:
+            r = requests.post(Config.API_BASE_URL + f"/teacher/{self.account.id}/courses/{self.curr_course_id}/homework/add", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            return True,"Add homework success."
+        else:
+            return False,r.json()['message']
+
+    def get_homework_list_section(self):
+        try:
+            r = requests.get(Config.API_BASE_URL + f"/teacher/{self.account.id}/courses/{self.curr_course_id}/homework", timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+        if r.json()['code'] == 0:
+            self.homework_list_section = r.json()['data']
+            return True,"Get homework list success."
+        else:
+            return False,r.json()['message']
+
 
     def create_new_course(self, data):
         try:
@@ -746,6 +897,20 @@ class TeacherController():
 
         if r.json()['code'] == 0:
             return True,"Set course grade success."
+        else:
+            return False,r.json()['message']
+
+    def set_reward(self, data):
+        try:
+            r = requests.post(Config.API_BASE_URL + f"/teacher/award", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            return True,"Set reward success."
         else:
             return False,r.json()['message']
 

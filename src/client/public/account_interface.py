@@ -38,7 +38,7 @@ class ChangePasswordCard(GroupHeaderCardWidget):
 
 
 class AccountInterface(ScrollArea):
-    def __init__(self, account_id, parent=None):
+    def     __init__(self, account_id, parent=None):
         super().__init__(parent)
 
         self.view = QWidget(self)
