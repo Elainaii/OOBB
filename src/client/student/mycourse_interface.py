@@ -14,7 +14,7 @@ from qfluentwidgets import (ScrollArea, MSFluentWindow, FluentIcon, NavigationIt
                             ComboBox, CheckBox, RadioButton, InfoBar, InfoBarPosition)
 
 from src.client.core.account import *
-
+import pandas as pd
 
 
 
@@ -53,8 +53,9 @@ class MyCourseTableView(TableView):
         self.setSortingEnabled(True)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
-    def ireset(self):
+    def reset(self):
         self.data = self.controller.course_list
+        print(self.data)
         self.model.removeRows(0, self.model.rowCount())
         for i, row in enumerate(self.data):
             self.model.setItem(i, 0, QStandardItem(str(row['course_id'])))
@@ -205,7 +206,7 @@ class MyCourseInterface(ScrollArea):
     def prev_page(self):
         status, msg = self.controller.mycourse_prev_page()
         if status:
-            self.table.ireset()
+            self.table.reset()
             self.commandBar.pageEdit.setText(str(self.controller.course_curr_page))
         else:
             InfoBar.error(
@@ -222,7 +223,7 @@ class MyCourseInterface(ScrollArea):
     def next_page(self):
         status, msg = self.controller.mycourse_next_page()
         if status:
-            self.table.ireset()
+            self.table.reset()
             self.commandBar.pageEdit.setText(str(self.controller.course_curr_page))
         else:
             InfoBar.error(
@@ -238,12 +239,30 @@ class MyCourseInterface(ScrollArea):
 
     def refresh(self):
         print(self.commandBar.filterMenu.get_semester(self.controller.account.curr_semester))
+        print(self.commandBar.filterMenu.get_status())
         self.controller.set_my_course_filter(self.commandBar.filterMenu.get_semester(self.controller.account.curr_semester), self.commandBar.filterMenu.get_status(), '')
         self.controller.init_course_list()
-        self.table.ireset()
+        self.table.reset()
 
     def share(self):
-        pass
+        # 先获取数据
+        a, b, data = self.controller.get_all_my_course_list()
+        df = pd.DataFrame(data)
+        # 选择保存路径
+        path = QFileDialog.getSaveFileName(self, '保存文件', '', 'Excel files (*.xlsx)')
+        if path[0] == '':
+            return
+        df.to_excel(path[0], index=False)
+        InfoBar.success(
+            title='成功',
+            content='导出成功',
+            orient=Qt.Vertical,
+            isClosable=True,
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=3000,
+            parent=self
+        )
+        return
 
     def change_page(self):
         if self.commandBar.pageEdit.text() == '':
@@ -262,5 +281,5 @@ class MyCourseInterface(ScrollArea):
             return
         self.controller.course_curr_page = page_number
         self.controller.init_course_list()
-        self.table.ireset()
+        self.table.reset()
         return

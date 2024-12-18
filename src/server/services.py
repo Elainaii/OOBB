@@ -1,6 +1,4 @@
 #负责对数据库进行操作
-from scipy.signal import qspline2d
-
 from db import *
 from exceptions import *
 from datetime import datetime
@@ -391,7 +389,7 @@ def get_homework(sid, page: int, size: int):
     sql = (
         "SELECT course.cid as course_id, course.course_name as course_name, "
         "homework.homework_name as homework_name, homework.content as homework_content, homework.deadline as homework_deadline,"
-        "section.sec_id as sec_id, homework_collection.content as content "
+        "section.sec_id as sec_id, homework_collection.content as homework_content "
         "FROM course "
         "JOIN section ON course.cid = section.cid "
         "JOIN homework ON section.sec_id = homework.sec_id "
@@ -507,7 +505,7 @@ def select_course(sid, sec_id):
 def submit_homework(sid, data: dict):
     db = get_db()
     cursor = db.cursor()
-    # 直接提交作业，注意分数是NULL
+
     # 检查是否提交过，如果提交过，则会更新
     sql0 = (
         "SELECT sid "
@@ -516,19 +514,22 @@ def submit_homework(sid, data: dict):
         "AND homework_name = %s "
     )
     cursor.execute(sql0, (sid, data['sec_id'], data['homework_name']))
-    sid = cursor.fetchone()
+    existing_sid = cursor.fetchone()
+
     sql1 = (
-        "INSERT INTO homework_collection VALUES (%s, %s, %s, %s, %s, NULL)"
+        "INSERT INTO homework_collection (sid, sec_id, homework_name, submit_time, content, score) "
+        "VALUES (%s, %s, %s, %s, %s, NULL)"
     )
     sql2 = (
         "UPDATE homework_collection SET content = %s, submit_time = %s "
         "WHERE sid = %s AND sec_id = %s AND homework_name = %s"
     )
 
-    if sid:
-        cursor.execute(sql2, (data['content'], datetime.now(), sid, data['sec_id'], data['homework_name']))
+    if existing_sid:
+        cursor.execute(sql2, (data['homework_content'], datetime.now(), sid, data['sec_id'], data['homework_name']))
     else:
-        cursor.execute(sql1, (sid, data['sec_id'], data['homework_name'], data['content'], datetime.now()))
+        cursor.execute(sql1, (sid, data['sec_id'], data['homework_name'], datetime.now(), data['homework_content']))
+
     db.commit()
     cursor.close()
 

@@ -53,7 +53,7 @@ def get_my_course_info(sid):
         'status': status,
         'course_name': course_name
     }
-
+    print(filters)
     data, num = services.get_my_course_info(sid, page_number, page_size, filters)
     return {'code': 0, 'message': 'success', 'page': page_number, 'size': page_size, 'total_num': num, 'data': data}
 

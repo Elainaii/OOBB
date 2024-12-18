@@ -35,7 +35,7 @@ class SelectCourseTableView(TableView):
     def __init__(self,controller:StudentController,parent = None):
         super().__init__(parent)
         self.controller = controller
-        #self.filter_menu = SelectCourseFilterMenu('过滤',FluentIcon.FILTER,controller)
+        # self.filter_menu = SelectCourseFilterMenu('过滤',FluentIcon.FILTER,controller)
 
         controller.init_select_course()
         self.data = controller.select_course_list
@@ -116,7 +116,6 @@ class SelectCourseTableView(TableView):
                     duration=3000,
                     parent=self.parent()
                 )
-
 
 
 class SelectCourseCommandBar(CommandBar):
