@@ -196,7 +196,7 @@ class MyCourseHomeworkTableView(TableView):
             # 逐个添加动作，Action 继承自 QAction，接受 FluentIconBase 类型的图标
             self.menu.addAction(self.copyAction)
             self.menu.addAction(self.gradeAction)
-            self.menu.addAction(self.awardAction)
+            #self.menu.addAction(self.awardAction)
 
 
             #menu.addAction(QAction('全选', shortcut='Ctrl+A'))
@@ -292,7 +292,6 @@ class MyCourseStudentCommandBar(CommandBar):
 class MyCourseStudentTableView(TableView):
     def __init__(self,controller:TeacherController,parent = None):
         super().__init__(parent)
-        self.parent = parent
         self.controller = controller
         controller.get_course_students()
         self.data = controller.student_list
@@ -410,7 +409,7 @@ class MyCourseStudentTableView(TableView):
 
     def setGrade(self):
         self.controller.curr_student_id = self.controller.student_list[self.currentIndex().row()]['student_id']
-        self.gradeMessageBox = SetCourseGradeMessageBox(self.controller,self.parent().parent())
+        self.gradeMessageBox = SetCourseGradeMessageBox(self.controller,self.parent())
         self.gradeMessageBox.sidLineEdit.setText(str(self.controller.curr_student_id))
         while self.gradeMessageBox.exec():
             grade = self.gradeMessageBox.gradeLineEdit.text()
@@ -547,10 +546,10 @@ class MyCourseCommandBar(CommandBar):
 
         self.controller = controller
 
-        self.add = Action(FluentIcon.ADD, "添加", self,triggered = lambda :print("添加"))
+        self.refresh = Action(FluentIcon.SYNC, "添加", self)
         self.copy = Action(FluentIcon.COPY, "", self)
         self.share = Action(FluentIcon.SHARE, "", self)
-        self.addAction(self.add)
+        self.addAction(self.refresh)
         self.addAction(self.copy)
         self.addAction(self.share)
         self.addSeparator()
@@ -659,7 +658,11 @@ class MyCourseInterface(ScrollArea):
         self.bindCourseHomework()
         self.bindCommandBar()
         self.table.addHomeworkAction.triggered.connect(self.open_homework_box)
+        self.commandBar.refresh.triggered.connect(self.refresh)
 
+    def refresh(self):
+        self.controller.get_course_list()
+        self.table.reset()
 
     def bindCourseStudent(self):
         self.table.studentAction.triggered.connect(self.openCourseStudent)

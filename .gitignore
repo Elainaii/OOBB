@@ -3,3 +3,4 @@
 /test/
 */__pycache__/
 *.pyc
+src/client/core/config.py

@@ -742,11 +742,22 @@ class TeacherController():
         else:
             return False,"Course time not exists."
 
-    def submit_course(self):
-        data = {
-            'cid':self.curr_add_course_id,
-            'time_classroom':self.time_classroom_list
-        }
+    def submit_section(self,limit,sec_id):
+        '''data[i]['sec_id'], data[i]['cid'], data[i]['start_week'], data[i]['end_week'], data[i]['max_number'], data[i]['semester_id'], data[i]['max_number']'''
+        data = []
+        for t in self.time_classroom_list:
+            data.append( {
+                'tid': self.account.id,
+                'cid': self.curr_add_course_id,
+                'sec_id': sec_id,
+                'timeslot_id': t['time_slot_id'],
+                'classroom_id': t['classroom_id'],
+                'start_week': t['begin_week'],
+                'end_week': t['end_week'],
+                'semester_id': self.account.curr_semester,
+                'max_number': limit
+            })
+
         try:
             r = requests.post(Config.API_BASE_URL + f"/teacher/{self.account.id}/courses/add", json=data, timeout=2)
             r.raise_for_status()
@@ -754,11 +765,12 @@ class TeacherController():
             return False,"连接超时"
         except requests.exceptions.RequestException as e:
             return False,f"An error occurred: {e}"
-
-        if r.json()['code'] == 0:
-            return True,"Submit course success."
-        else:
+        if r.json()['code'] != 0:
             return False,r.json()['message']
+        return True,"Add course success."
+
+
+
 
     def homework_next_page(self):
         if self.homework_curr_page + 1 < self.homework_total_page:

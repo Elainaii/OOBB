@@ -53,7 +53,7 @@ class MyCourseTableView(TableView):
         self.setSortingEnabled(True)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
-    def reset(self):
+    def ireset(self):
         self.data = self.controller.course_list
         self.model.removeRows(0, self.model.rowCount())
         for i, row in enumerate(self.data):
@@ -205,7 +205,7 @@ class MyCourseInterface(ScrollArea):
     def prev_page(self):
         status, msg = self.controller.mycourse_prev_page()
         if status:
-            self.table.reset()
+            self.table.ireset()
             self.commandBar.pageEdit.setText(str(self.controller.course_curr_page))
         else:
             InfoBar.error(
@@ -222,7 +222,7 @@ class MyCourseInterface(ScrollArea):
     def next_page(self):
         status, msg = self.controller.mycourse_next_page()
         if status:
-            self.table.reset()
+            self.table.ireset()
             self.commandBar.pageEdit.setText(str(self.controller.course_curr_page))
         else:
             InfoBar.error(
@@ -240,7 +240,7 @@ class MyCourseInterface(ScrollArea):
         print(self.commandBar.filterMenu.get_semester(self.controller.account.curr_semester))
         self.controller.set_my_course_filter(self.commandBar.filterMenu.get_semester(self.controller.account.curr_semester), self.commandBar.filterMenu.get_status(), '')
         self.controller.init_course_list()
-        self.table.reset()
+        self.table.ireset()
 
     def share(self):
         pass
@@ -262,5 +262,5 @@ class MyCourseInterface(ScrollArea):
             return
         self.controller.course_curr_page = page_number
         self.controller.init_course_list()
-        self.table.reset()
+        self.table.ireset()
         return

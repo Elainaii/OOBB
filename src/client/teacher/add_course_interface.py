@@ -44,7 +44,7 @@ class AddCourseInfoCard(GroupHeaderCardWidget):
         self.setTitle("课程信息")
         self.controller = controller
         self.setBorderRadius(8)
-        self.setFixedHeight(250)
+        self.setFixedHeight(300)
         # data = controller.home_info
         # 将数据填充到组件中
         # 平均分 = data['avg_score']
@@ -52,11 +52,18 @@ class AddCourseInfoCard(GroupHeaderCardWidget):
         self.courseIdLabel = BodyLabel(f"课程ID：", self)
         self.creditLabel = BodyLabel(f"学分：", self)
         self.semesterLabel = BodyLabel(f"开课学期：", self)
+        self.limitLineEdit = SpinBox()
+        self.limitLineEdit.setRange(10, 3000)
+        self.secIdLineEdit = LineEdit()
+        self.secIdLineEdit.setPlaceholderText("请输入课程号")
+
 
         # 添加组件到分组中
         self.addGroup(FluentIcon.DICTIONARY,"课程ID","",self.courseIdLabel)
         self.addGroup(FluentIcon.CERTIFICATE,"学分","",self.creditLabel)
         self.addGroup(FluentIcon.CERTIFICATE,"开课学期","",self.semesterLabel)
+        self.addGroup(FluentIcon.CERTIFICATE,"容纳人数","",self.limitLineEdit)
+        self.addGroup(FluentIcon.CERTIFICATE,"课程号","",self.secIdLineEdit)
 
     def updateInfo(self):
         courseId = self.controller.curr_add_course_id
@@ -338,6 +345,7 @@ class AddCourseInterface(ScrollArea):
         self.breadcrumbBar.addItem(self.add.objectName(), "填写课程信息")
         self.controller.curr_add_course_id =  self.controller.all_course_list[self.table.currentIndex().row()]['cid']
         self.addCourseInfoCard.updateInfo()
+        self.submit.clicked.connect(self.submit_section)
 
     def open_add_course_time_box(self):
         self.messageBox = AddClassTimeMessageBox(self.controller,self.parent())
@@ -413,8 +421,12 @@ class AddCourseInterface(ScrollArea):
         ])
         #self.addCourseTableCard.table.resizeColumnsToContents()
 
-    def submit_course(self):
-        status,msg = self.controller.submit_course()
+    def submit_section(self):
+        limit = self.addCourseInfoCard.limitLineEdit.value()
+        sec_id = self.addCourseInfoCard.secIdLineEdit.text()
+
+
+        status,msg = self.controller.submit_section(limit,sec_id)
         if not status:
             InfoBar.error(
                 title='错误',
