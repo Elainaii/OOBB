@@ -86,7 +86,7 @@ def get_course_info(sid):
         return create_response({}, message='page and size are required,such as /admin/students?size=20&page=0', code=-1)
     page_number = int(page_number)
     page_size = int(page_size)
-    data, num = services.get_course_info(page_number, page_size)
+    data, num = services.get_course_info(page_number, page_size, sid)
     return {'code': 0, 'message': 'success','page':page_number,'size':page_size , 'total_num': num ,'data': data}
 
 #学生选课，需要提交课程id

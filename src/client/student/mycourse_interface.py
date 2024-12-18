@@ -6,7 +6,7 @@ from qfluentwidgets import ScrollArea, MSFluentWindow, FluentIcon, NavigationIte
     SearchLineEdit, TableView, CaptionLabel, LineEdit, TransparentDropDownPushButton, setFont, RoundMenu, \
     TogglePushButton, CheckableMenu, MenuIndicatorType, ElevatedCardWidget
 
-from src.client.core.account import Account,StudentController
+from src.client.core.account import *
 
 
 
@@ -14,28 +14,28 @@ from src.client.core.account import Account,StudentController
 class MyCourseTableView(TableView):
     def __init__(self,controller:StudentController,parent = None):
         super().__init__(parent)
-
-        controller.set_my_course_filter(controller.account.curr_semester,'0','')
+        self.controller = controller
+        self.filter_menu = MyCourseFilterMenu('过滤',FluentIcon.FILTER,controller)
+        print(self.filter_menu.get_status())
+        controller.set_my_course_filter(controller.account.curr_semester, 0, '')
         controller.init_course_list()
-        data = controller.course_list
+        self.data = controller.course_list
 
-        model = QStandardItemModel()
-        for i, row in enumerate(data):
-            model.setItem(i, 0, QStandardItem(str(row['course_id'])))
-            model.setItem(i, 1, QStandardItem(row['course_name']))
-            model.setItem(i, 2, QStandardItem(row['building_name'] +" "+ str(row['room_number'])))
-            model.setItem(i, 3, QStandardItem(row['teacher_name']))
-            model.setItem(i, 4, QStandardItem(str(row['start_week'])))
-            model.setItem(i, 5, QStandardItem(str(row['end_week'])))
-            model.setItem(i, 6, QStandardItem(str(row['course_credit'])))
-            model.setItem(i, 7, QStandardItem(str('周' + str(row['course_day']) +' '+ str(row['course_start_time']) + "-" + str(row['course_end_time']))))
-            #model.setItem(i, 7, QStandardItem(str(row['grade'])))
+        self.model = QStandardItemModel()
+        for i, row in enumerate(self.data):
+            self.model.setItem(i, 0, QStandardItem(str(row['course_id'])))
+            self.model.setItem(i, 1, QStandardItem(row['course_name']))
+            self.model.setItem(i, 2, QStandardItem(row['building_name'] +" "+ str(row['room_number'])))
+            self.model.setItem(i, 3, QStandardItem(row['teacher_name']))
+            self.model.setItem(i, 4, QStandardItem(str(row['start_week'])))
+            self.model.setItem(i, 5, QStandardItem(str(row['end_week'])))
+            self.model.setItem(i, 6, QStandardItem(str(row['course_credit'])))
+            self.model.setItem(i, 7, QStandardItem(str('周' + str(row['course_day']) +' '+ str(row['course_start_time']) + "-" + str(row['course_end_time']))))
 
 
-        model.setHorizontalHeaderLabels(['课程id','名称', '上课地址', '教师', '开始周数','结束周数','学分','时间','成绩'])
-
+        self.model.setHorizontalHeaderLabels(['课程号', '课程名', '上课地点', '教师', '开始周', '结束周', '学分', '上课时间'])
         self.agentModel = QSortFilterProxyModel()
-        self.agentModel.setSourceModel(model)
+        self.agentModel.setSourceModel(self.model)
         self.agentModel.setFilterKeyColumn(-1)
 
 
@@ -45,6 +45,19 @@ class MyCourseTableView(TableView):
         self.setSortingEnabled(True)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
+    def reset(self):
+        self.data = self.controller.course_list
+        self.model.removeRows(0, self.model.rowCount())
+        for i, row in enumerate(self.data):
+            self.model.setItem(i, 0, QStandardItem(str(row['course_id'])))
+            self.model.setItem(i, 1, QStandardItem(row['course_name']))
+            self.model.setItem(i, 2, QStandardItem(row['building_name'] +" "+ str(row['room_number'])))
+            self.model.setItem(i, 3, QStandardItem(row['teacher_name']))
+            self.model.setItem(i, 4, QStandardItem(str(row['start_week'])))
+            self.model.setItem(i, 5, QStandardItem(str(row['end_week'])))
+            self.model.setItem(i, 6, QStandardItem(str(row['course_credit'])))
+            self.model.setItem(i, 7, QStandardItem(str('周' + str(row['course_day']) +' '+ str(row['course_start_time']) + "-" + str(row['course_end_time']))))
+        self.agentModel.setSourceModel(self.model)
 
 class MyCourseFilterMenu(TransparentDropDownPushButton):
     def __init__(self,text,Icon,controller:StudentController):
@@ -72,24 +85,49 @@ class MyCourseFilterMenu(TransparentDropDownPushButton):
         # 这里请求学期列表，
         self.submenu2 = CheckableMenu('学期', indicatorType=MenuIndicatorType.RADIO)
         self.actionList = []
+        self.actiongroup2 = QActionGroup(self.submenu2)
+        # 只显示20个学期
         for i,semester in enumerate(controller.account.semester_list):
             self.actionList.append(Action(FluentIcon.CALENDAR, str(semester['year']) + str(semester['season']),checkable=True))
             self.submenu2.addAction(self.actionList[i])
-
-
+            self.actiongroup2.addAction(self.actionList[i])
+            if(i == 19):
+                break
+        self.actionList[0].setChecked(True)
 
         menu.addMenu(self.submenu1)
         menu.addMenu(self.submenu2)
         self.setMenu(menu)
 
 
+    def get_status(self):
+        if self.action1.isChecked():
+            return '2'
+        elif self.action2.isChecked():
+            return '3'
+        elif self.action3.isChecked():
+            return '0'
+        elif self.action4.isChecked():
+            return '1'
+
+    def get_semester(self, num):
+        for i, action in enumerate(self.actionList):
+            if action.isChecked():
+                # 因为这是倒序的，所以要取反
+                return num - i
+
 
 class MyCousreCommandBar(CommandBar):
     def __init__(self,controller:StudentController,parent = None):
         super().__init__(parent)
-        self.addAction(Action(FluentIcon.SYNC, "", self))
-        self.addAction(Action(FluentIcon.COPY, "", self))
-        self.addAction(Action(FluentIcon.SHARE, "", self))
+
+        self.controller = controller
+
+        self.refresh = Action(FluentIcon.SYNC, "刷新", self)
+        self.addAction(self.refresh)
+        # self.addAction(Action(FluentIcon.COPY, "", self))
+        self.share = Action(FluentIcon.SHARE, "导出", self)
+        self.addAction(self.share)
         self.addSeparator()
         self.addAction(Action(FluentIcon.UP, "", self))
         self.addAction(Action(FluentIcon.DOWN, "", self))
@@ -128,8 +166,16 @@ class MyCourseInterface(ScrollArea):
 
         self.commandBar = MyCousreCommandBar(self.controller,self.view)
         self.table = MyCourseTableView(self.controller,self)
-
-
+        self.commandBar.refresh.triggered.connect(self.refresh)
+        self.commandBar.share.triggered.connect(self.share)
+        # 筛选完毕后直接刷新
+        self.commandBar.filterMenu.action1.triggered.connect(self.refresh)
+        self.commandBar.filterMenu.action2.triggered.connect(self.refresh)
+        self.commandBar.filterMenu.action3.triggered.connect(self.refresh)
+        self.commandBar.filterMenu.action4.triggered.connect(self.refresh)
+        # 筛选学期后直接刷新
+        for action in self.commandBar.filterMenu.actionList:
+            action.triggered.connect(self.refresh)
 
         self.setWidget(self.view)
         self.setWidgetResizable(True)
@@ -144,3 +190,11 @@ class MyCourseInterface(ScrollArea):
 
         self.enableTransparentBackground()
 
+    def refresh(self):
+        print(self.commandBar.filterMenu.get_semester(self.controller.account.curr_semester))
+        self.controller.set_my_course_filter(self.commandBar.filterMenu.get_semester(self.controller.account.curr_semester), self.commandBar.filterMenu.get_status(), '')
+        self.controller.init_course_list()
+        self.table.reset()
+
+    def share(self):
+        pass

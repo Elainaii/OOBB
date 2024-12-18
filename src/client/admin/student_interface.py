@@ -363,7 +363,7 @@ class StudentCommandBar(CommandBar):
         self.controller = controller
 
         self.add = Action(FluentIcon.ADD, "添加", self,triggered = self.addStudent)
-        self.refresh = Action(FluentIcon.SYNC, "刷新", self) # TODO: 刷新学生列表
+        self.refresh = Action(FluentIcon.SYNC, "刷新", self)
         self.share = Action(FluentIcon.SHARE, "导出", self)
         self.addAction(self.add)
         self.addAction(self.refresh)

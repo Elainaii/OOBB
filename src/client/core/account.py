@@ -84,13 +84,19 @@ class StudentController():
     def __init__(self,account:Account):
         self.account = account
         self.home_info = dict()
+
         self.course_list = list()
         self.course_total_size = -1
         self.course_curr_page = 0
         self.course_total_page = 0
         self.page_size = 12
         self.my_course_filter = dict()
+
+        self.select_course_total_size = -1
         self.select_course_list = list()
+
+        self.award_total_size = -1
+        self.award_list = list()
 
         self.account.get_semester_list()
         self.account.get_dept_list()
@@ -149,6 +155,38 @@ class StudentController():
             'course_name': course_name
         }
 
+    def init_select_course(self):
+        print(1919810)
+        if self.select_course_total_size == -1:
+            try:
+                r = requests.get(Config.API_BASE_URL + f"/student/{self.account.id}/courses/info?size=12&page=0", timeout=2)
+                r.raise_for_status()
+            except requests.exceptions.Timeout:
+                return False,"连接超时"
+            except requests.exceptions.RequestException as e:
+                return False,f"An error occurred: {e}"
+
+            if r.json()['code'] == 0:
+                self.select_course_list = r.json()['data']
+                return True,"Get select course list success."
+            else:
+                return False,r.json()['message']
+
+    def init_award(self):
+        if self.award_total_size == -1:
+            try:
+                r = requests.get(Config.API_BASE_URL + f"/student/{self.account.id}/awards?size=12&page=0", timeout=2)
+                r.raise_for_status()
+            except requests.exceptions.Timeout:
+                return False,"连接超时"
+            except requests.exceptions.RequestException as e:
+                return False,f"An error occurred: {e}"
+
+            if r.json()['code'] == 0:
+                self.award_list = r.json()['data']
+                return True,"Get award list success."
+            else:
+                return False,r.json()['message']
 
 class AdminController:
     def __init__(self, account: Account):

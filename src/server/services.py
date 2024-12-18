@@ -284,14 +284,17 @@ def get_my_course_info(sid , page: int, size: int, filters: dict):
     # 通过课程状态过滤
     f2 = filters.get('status')
     if f2 is not None:
+        f2 = int(f2)
         if f2 == 0:
             # 全部
+            print(114514)
             pass
         elif f2 == 1:
             # 正在进行
             sql += "AND student_section.score IS NULL "
         elif f2 == 2:
             # 已通过
+            print(114514)
             sql += "AND student_section.score >= 60 "
         elif f2 == 3:
             sql += "AND student_section.score < 60 "
@@ -325,34 +328,12 @@ def get_course_info(page: int, size: int, sid: int):
     cursor.execute("SELECT max(semester_id) as semester_id FROM semester")
     semester = cursor.fetchone() # 只选择这个学期的课程
 
-    sql1 = (
-        "WITH course1 AS (" # course1 是没有先修课的课程：所有课程减去有先修课的课程
-        "   (SELECT cid "
-        "   FROM course) "
-        "   EXCEPT "
-        "   (SELECT DISTINCT cid "
-        "   FROM pre_course) "
-        "), course2 AS (" # course2 是已经选过的课程，并且有成绩的课程 TODO：需不需要考虑及格？
-        "   SELECT DISTINCT cid "
-        "   FROM section, student_section "
-        "   WHERE student_section.sid = %s " # 学生id
-        "   AND student_section.sec_id = section.sec_id " # 学生选的课
-        "   AND student_section.score IS NOT NULL" # 有成绩
-        "), course3 AS ("
-        "   SELECT cid "
-        "   FROM course "
-        "   WHERE cid IN (SELECT cid FROM course1) "
-        "   OR cid IN ("
-        "   SELECT distinct cid "
-        "   FROM pre_course "
-        "   WHERE pre_cid IN (SELECT cid FROM course2) "
-        "   ) "
-        ") " # course3 是可以选的课程，接下来找出这些课程的信息，必须满足：剩余人数大于0，当前学期开课
+    sql1 = ( # 只要这学期开的课程、没满，都可选（除非刚刚你选择过这门课，这意味着一门课在一个学期选择了两次，这是不允许的）
         "SELECT course.cid as course_id, course.course_name as course_name, department.dept_name as department_name, "
         "teacher.teacher_name as teacher_name, course.credit as course_credit, classroom.building_name as building_name, classroom.room_number as room_number, "
-        "timeslot.day as course_day, timeslot.start_time as course_start_time, timeslot.end_time as course_end_time "
-        "FROM course3 "
-        "JOIN course ON course3.cid = course.cid "
+        "timeslot.day as course_day, timeslot.start_time as course_start_time, timeslot.end_time as course_end_time, "
+        "section.start_week as start_week, section.end_week as end_week "
+        "FROM course "
         "JOIN section ON course.cid = section.cid "
         "JOIN timeslot_classroom_section ON section.sec_id = timeslot_classroom_section.sec_id "
         "JOIN classroom ON timeslot_classroom_section.classroom_id = classroom.classroom_id "
@@ -360,8 +341,10 @@ def get_course_info(page: int, size: int, sid: int):
         "JOIN teacher_section ON section.sec_id = teacher_section.sec_id "
         "JOIN teacher ON teacher_section.tid = teacher.tid "
         "JOIN department ON course.did = department.did "
-        "WHERE section.rest_number > 0 "
-        "AND section.semester_id = %s"
+        "LEFT JOIN student_section on section.sec_id = student_section.sec_id AND student_section.sid = %s "
+        "WHERE section.semester_id = %s "
+        "AND student_section.sid IS NULL "
+        "AND section.rest_number > 0 "
     )
     cursor.execute(sql1, (sid, semester['semester_id']))
     courses = cursor.fetchall()
