@@ -389,7 +389,7 @@ def get_homework(sid, page: int, size: int):
     sql = (
         "SELECT course.cid as course_id, course.course_name as course_name, "
         "homework.homework_name as homework_name, homework.content as homework_content, homework.deadline as homework_deadline,"
-        "section.sec_id as sec_id, homework_collection.content as homework_content "
+        "section.sec_id as sec_id, homework_collection.content as homework_content, homework_collection.score as score "
         "FROM course "
         "JOIN section ON course.cid = section.cid "
         "JOIN homework ON section.sec_id = homework.sec_id "
@@ -909,3 +909,20 @@ def get_homework_section(tid, sec_id):
     homeworks = cursor.fetchall()
     cursor.close()
     return homeworks
+
+# 获取教师信息
+def get_teacher_info(tid):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    sql = (
+        "SELECT teacher.tid as teacher_id, teacher.teacher_name as teacher_name, "
+        "department.dept_name as department_name, count(teacher_section.sec_id) as count_course "
+        "FROM teacher "
+        "JOIN department ON teacher.did = department.did "
+        "JOIN teacher_section ON teacher.tid = teacher_section.tid "
+        "WHERE teacher.tid = %s "
+    )
+    cursor.execute(sql, (tid,))
+    teachers = cursor.fetchall()
+    cursor.close()
+    return teachers

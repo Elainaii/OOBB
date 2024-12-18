@@ -161,20 +161,20 @@ class StudentController():
 
     def init_select_course(self):
         print(1919810)
-        if self.select_course_total_size == -1:
-            try:
-                r = requests.get(Config.API_BASE_URL + f"/student/{self.account.id}/courses/info?size=12&page=0", timeout=2)
-                r.raise_for_status()
-            except requests.exceptions.Timeout:
-                return False,"连接超时"
-            except requests.exceptions.RequestException as e:
-                return False,f"An error occurred: {e}"
 
-            if r.json()['code'] == 0:
-                self.select_course_list = r.json()['data']
-                return True,"Get select course list success."
-            else:
-                return False,r.json()['message']
+        try:
+            r = requests.get(Config.API_BASE_URL + f"/student/{self.account.id}/courses/info?size=12&page=0", timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            self.select_course_list = r.json()['data']
+            return True,"Get select course list success."
+        else:
+            return False,r.json()['message']
 
     def get_all_my_course_list(self):
         try:
@@ -222,20 +222,19 @@ class StudentController():
                 return False,r.json()['message']
 
     def init_homework(self):
-        if self.homework_total_size == -1:
-            try:
-                r = requests.get(Config.API_BASE_URL + f"/student/{self.account.id}/courses/homework?size=12&page=0", timeout=2)
-                r.raise_for_status()
-            except requests.exceptions.Timeout:
-                return False,"连接超时"
-            except requests.exceptions.RequestException as e:
-                return False,f"An error occurred: {e}"
+        try:
+            r = requests.get(Config.API_BASE_URL + f"/student/{self.account.id}/courses/homework?size=12&page=0", timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
 
-            if r.json()['code'] == 0:
-                self.homework_list = r.json()['data']
-                return True,"Get homework list success."
-            else:
-                return False,r.json()['message']
+        if r.json()['code'] == 0:
+            self.homework_list = r.json()['data']
+            return True,"Get homework list success."
+        else:
+            return False,r.json()['message']
 
     def submit_homework(self,data):
         try:
