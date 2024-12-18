@@ -98,6 +98,9 @@ class StudentController():
         self.award_total_size = -1
         self.award_list = list()
 
+        self.homework_total_size = -1
+        self.homework_list = list()
+
         self.account.get_semester_list()
         self.account.get_dept_list()
 
@@ -172,6 +175,20 @@ class StudentController():
             else:
                 return False,r.json()['message']
 
+    def select_course(self,data):
+        try:
+            r = requests.post(Config.API_BASE_URL + f"/student/{self.account.id}/courses/select", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            return True,"Select course success."
+        else:
+            return False,r.json()['message']
+
     def init_award(self):
         if self.award_total_size == -1:
             try:
@@ -180,6 +197,7 @@ class StudentController():
             except requests.exceptions.Timeout:
                 return False,"连接超时"
             except requests.exceptions.RequestException as e:
+                print(e)
                 return False,f"An error occurred: {e}"
 
             if r.json()['code'] == 0:
@@ -187,6 +205,36 @@ class StudentController():
                 return True,"Get award list success."
             else:
                 return False,r.json()['message']
+
+    def init_homework(self):
+        if self.homework_total_size == -1:
+            try:
+                r = requests.get(Config.API_BASE_URL + f"/student/{self.account.id}/courses/homework?size=12&page=0", timeout=2)
+                r.raise_for_status()
+            except requests.exceptions.Timeout:
+                return False,"连接超时"
+            except requests.exceptions.RequestException as e:
+                return False,f"An error occurred: {e}"
+
+            if r.json()['code'] == 0:
+                self.homework_list = r.json()['data']
+                return True,"Get homework list success."
+            else:
+                return False,r.json()['message']
+
+    def submit_homework(self,data):
+        try:
+            r = requests.post(Config.API_BASE_URL + f"/student/{self.account.id}/courses/homework/submit", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            return True,"Submit homework success."
+        else:
+            return False,r.json()['message']
 
 class AdminController:
     def __init__(self, account: Account):
@@ -623,6 +671,7 @@ class TeacherController():
         time_slot_ids = [entry['time_slot_id'] for entry in self.time_classroom_list]
         if time_slot_id  in time_slot_ids:
             return False,"Time slot exists."
+        # 然后检查教室、时间段是否冲突
         self.time_classroom_list.append({
             'time_slot_id':time_slot_id,
             'classroom_id':classroom_id

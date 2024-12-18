@@ -1,12 +1,35 @@
-from PySide6.QtGui import QIcon, QStandardItem, QStandardItemModel, QActionGroup
-from PySide6.QtCore import Qt, QSortFilterProxyModel,QAbstractItemModel
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QAbstractItemView,QSizePolicy,QTableView,QHeaderView
+from math import copysign
+from msilib.schema import ComboBox, CheckBox
 
-from qfluentwidgets import ScrollArea, MSFluentWindow, FluentIcon, NavigationItemPosition, CommandBar, Action, \
-    SearchLineEdit, TableView, CaptionLabel, LineEdit, TransparentDropDownPushButton, setFont, RoundMenu, \
-    TogglePushButton, CheckableMenu, MenuIndicatorType, ElevatedCardWidget
+from PySide6.QtGui import QIcon, QStandardItem, QStandardItemModel, QActionGroup, QCursor,QAction
+from PySide6.QtCore import Qt, QSortFilterProxyModel, QAbstractItemModel, Signal
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QAbstractItemView, QSizePolicy, QTableView, QHeaderView, \
+    QButtonGroup, QHBoxLayout, QFileDialog
+
+from qfluentwidgets import (ScrollArea, MSFluentWindow, FluentIcon, NavigationItemPosition, CommandBar, Action, \
+                            SearchLineEdit, TableView, CaptionLabel, LineEdit, TransparentDropDownPushButton, setFont,
+                            RoundMenu, \
+                            TogglePushButton, CheckableMenu, MenuIndicatorType, ElevatedCardWidget, MessageBoxBase,
+                            SubtitleLabel, DatePicker,
+                            ComboBox, CheckBox, RadioButton, InfoBar, InfoBarPosition)
 
 from src.client.core.account import *
+from src.create_data import course_names
+
+
+class SelectCourseMessageBox(MessageBoxBase):
+    def __init__(self,controller:StudentController,parent=None,course_name = '', sec_id = ''):
+        super().__init__(parent)
+        self.controller = controller
+        self.titleLabel = SubtitleLabel('确认选择课程')
+
+        self.course_nameLabel = CaptionLabel(f"课程名: {course_name}")
+        self.section_idLabel = CaptionLabel(f"开课号: {sec_id}")
+        self.viewLayout.addWidget(self.titleLabel)
+        self.viewLayout.addWidget(self.course_nameLabel)
+        self.viewLayout.addWidget(self.section_idLabel)
+
+        self.widget.setMinimumWidth(350)
 
 class SelectCourseTableView(TableView):
     def __init__(self,controller:StudentController,parent = None):
@@ -35,11 +58,64 @@ class SelectCourseTableView(TableView):
         self.agentModel.setFilterKeyColumn(-1)
 
 
+        self.menu = None
         self.setModel(self.agentModel)
         self.verticalHeader().hide()
         self.resizeColumnsToContents()
         self.setSortingEnabled(True)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.show_rightmenu)
+
+    def show_rightmenu(self, pos):
+        index = self.indexAt(pos)  # 返回点击的index
+        if index.isValid():  # 如果有index,则弹出菜单,并且高光选中的行
+            self.setCurrentIndex(index)
+            self.menu = RoundMenu()
+            # self.l.setCurrentIndex(Q)
+            # 逐个添加动作，Action 继承自 QAction，接受 FluentIconBase 类型的图标
+            # self.copyAction = Action(FluentIcon.COPY, '复制', triggered=lambda: print("复制成功"))
+            # self.deleteAction = Action(FluentIcon.DELETE, '删除', triggered=lambda: print("删除成功"))
+            self.selectAction = Action(FluentIcon.ACCEPT, '选课', triggered=self.select_course)
+            self.menu.addAction(self.selectAction)
+            # 批量添加动作
+            # 添加分割线
+            # 子菜单
+
+            # menu.addAction(QAction('全选', shortcut='Ctrl+A'))
+        self.menu.exec(QCursor.pos())
+
+    def select_course(self):
+        # 获取选中的课程名字
+        course_name = self.data[self.currentIndex().row()]['course_name']
+        # 获取选中的开课号
+        sec_id = self.data[self.currentIndex().row()]['sec_id']
+        self.select_course_message_box = SelectCourseMessageBox(self.controller, self.parent(), course_name, sec_id)
+        while self.select_course_message_box.exec() == 1:
+            data = {
+                'sec_id': sec_id
+            }
+            status, msg = self.controller.select_course(data)
+            if status:
+                InfoBar.success(
+                    title='成功',
+                    content=msg,
+                    orient=Qt.Vertical,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self.parent()
+                )
+            else:
+                InfoBar.error(
+                    title='错误',
+                    content=msg,
+                    orient=Qt.Vertical,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self.parent()
+                )
 
 class SelectCourseFilterMenu(TransparentDropDownPushButton):
     def __init__(self,text,Icon, controller:StudentController):
@@ -138,3 +214,4 @@ class SelectCourseInterface(ScrollArea):
         self.vBoxLayout.setContentsMargins(0, 0, 10, 30)
         self.vBoxLayout.addWidget(self.commandBar, 0, Qt.AlignmentFlag.AlignTop)
         self.vBoxLayout.addWidget(self.table, 0)
+        self.enableTransparentBackground()

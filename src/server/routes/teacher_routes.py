@@ -39,6 +39,7 @@ def get_courses(tid):
 @teacher_bp.route('/teacher/<int:tid>/courses/add', methods=['POST'])
 def add_course(tid):
     # 前端传入的参数：课程id cid, 学期id semester_id， 想要选择的教室id classroom_id， 想要选择的时间段 time_slot_id 还有sec_id
+    # 这些数据应当类似一个表格，表示一个课程的多个时间段和教室
     data = request.json
     try:
         services.add_course(tid, data)
@@ -47,6 +48,23 @@ def add_course(tid):
     except Exception as e:
         return jsonify({'code': -1, 'message': str(e)})
     return jsonify({'code': 0, 'message': 'success','data':data})
+
+# 判断课程和时间是否和当前学期已经开设的课程冲突
+@teacher_bp.route('/teacher/<int:tid>/courses/check', methods=['GET'])
+def check_course(tid):
+    # 前端传入的参数：课程id cid, 学期id semester_id， 想要选择的教室id classroom_id， 想要选择的时间段 time_slot_id 还有sec_id
+    semester_id = request.args.get('semester_id')
+    classroom_id = request.args.get('classroom_id')
+    time_slot_id = request.args.get('time_slot_id')
+    sec_id = request.args.get('sec_id')
+    data = {
+        'semester_id': semester_id,
+        'classroom_id': classroom_id,
+        'time_slot_id': time_slot_id,
+        'sec_id': sec_id
+    }
+    flag = services.check_course(tid, data)
+    return jsonify({'code': 0, 'message': 'success','valid':flag})
 
 #获取某个课程的学生列表，返回学生的id，姓名
 @teacher_bp.route('/teacher/<int:tid>/courses/<int:sec_id>/students', methods=['GET'])

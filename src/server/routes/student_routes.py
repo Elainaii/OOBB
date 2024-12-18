@@ -19,11 +19,17 @@ from src.server.routes.route_utils import *
 
 student_bp = Blueprint('student', __name__)
 
-#获取学生奖惩信息
+#获取学生奖惩信息，分页
 @student_bp.route('/student/<int:sid>/awards', methods=['GET'])
 def get_awards(sid):
-    data = services.get_award(sid)
-    return create_response(data, message='success', code=0)
+    page_size = request.args.get('size')
+    page_number = request.args.get('page')
+    if not page_size or not page_number:
+        return create_response({}, message='page and size are required,such as /student/201011919/awards?size=20&page=0', code=-1)
+    page_size = int(page_size)
+    page_number = int(page_number)
+    data, num = services.get_award(sid, page_number, page_size)
+    return jsonify({'code': 0, 'message': 'success', 'page': page_number, 'size': page_size, 'total_num': num, 'data': data})
 
 #获取学生已选择的课程信息,包括课程名，教师名，学分，学时，上课时间，上课地点
 @student_bp.route('/student/<int:sid>/courses', methods=['GET'])
@@ -66,8 +72,8 @@ def get_homework(sid):
     if not page_number or not page_size:
         return create_response({}, message='page and size are required,such as /admin/students?size=20&page=0', code=-1)
     page_number = int(page_number)
-    page_size, num = int(page_size)
-    data = services.get_homework(sid, page_number, page_size)
+    page_size = int(page_size)
+    data, num = services.get_homework(sid, page_number, page_size)
     return {'code': 0, 'message': 'success', 'page': page_number, 'size': page_size, 'total_num': num, 'data': data}
 
 #提交作业，需要提交作业的课程id，作业id，作业内容

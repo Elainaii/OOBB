@@ -185,9 +185,6 @@ class MyCourseInterface(ScrollArea):
         self.vBoxLayout.setContentsMargins(0, 0, 10, 30)
         self.vBoxLayout.addWidget(self.commandBar,0, Qt.AlignmentFlag.AlignTop)
         self.vBoxLayout.addWidget(self.table, 0)
-
-
-
         self.enableTransparentBackground()
 
     def refresh(self):
@@ -198,3 +195,4 @@ class MyCourseInterface(ScrollArea):
 
     def share(self):
         pass
+

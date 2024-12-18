@@ -1,10 +1,17 @@
-from PySide6.QtGui import QIcon, QStandardItem, QStandardItemModel, QActionGroup
-from PySide6.QtCore import Qt, QSortFilterProxyModel,QAbstractItemModel
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QAbstractItemView,QSizePolicy,QTableView,QHeaderView
+from math import copysign
+from msilib.schema import ComboBox, CheckBox
 
-from qfluentwidgets import ScrollArea, MSFluentWindow, FluentIcon, NavigationItemPosition, CommandBar, Action, \
-    SearchLineEdit, TableView, CaptionLabel, LineEdit, TransparentDropDownPushButton, setFont, RoundMenu, \
-    TogglePushButton, CheckableMenu, MenuIndicatorType, ElevatedCardWidget
+from PySide6.QtGui import QIcon, QStandardItem, QStandardItemModel, QActionGroup, QCursor,QAction
+from PySide6.QtCore import Qt, QSortFilterProxyModel, QAbstractItemModel, Signal
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QAbstractItemView, QSizePolicy, QTableView, QHeaderView, \
+    QButtonGroup, QHBoxLayout, QFileDialog
+
+from qfluentwidgets import (ScrollArea, MSFluentWindow, FluentIcon, NavigationItemPosition, CommandBar, Action, \
+                            SearchLineEdit, TableView, CaptionLabel, LineEdit, TransparentDropDownPushButton, setFont,
+                            RoundMenu, \
+                            TogglePushButton, CheckableMenu, MenuIndicatorType, ElevatedCardWidget, MessageBoxBase,
+                            SubtitleLabel, DatePicker,
+                            ComboBox, CheckBox, RadioButton, InfoBar, InfoBarPosition)
 from src.client.core.account import *
 
 
@@ -14,18 +21,15 @@ class AwardTableView(TableView):
         self.controller = controller
         # self.filter_menu = MyCourseFilterMenu('过滤',FluentIcon.FILTER,controller)
         # controller.set_my_course_filter(controller.account.curr_semester, 0, '')
-        # controller.init_course_list()
+        controller.init_award()
         self.data = controller.award_list
-
+        print(self.data)
         self.model = QStandardItemModel()
         for i, row in enumerate(self.data):
-            self.model.setItem(i, 0, QStandardItem(str(row['award_id'])))
+            self.model.setItem(i, 0, QStandardItem(str(row['award_name'])))
             self.model.setItem(i, 1, QStandardItem(row['award_content']))
-            self.model.setItem(i, 2, QStandardItem(row['award_time']))
-            self.model.setItem(i, 3, QStandardItem(row['award_type']))
-            self.model.setItem(i, 4, QStandardItem(str(row['award_score'])))
 
-        self.model.setHorizontalHeaderLabels(['奖励编号', '奖励内容', '奖励时间', '奖励类型', '奖励分数'])
+        self.model.setHorizontalHeaderLabels(['奖励名', '奖励内容'])
         self.agentModel = QSortFilterProxyModel()
         self.agentModel.setSourceModel(self.model)
         self.agentModel.setFilterKeyColumn(-1)
@@ -90,9 +94,11 @@ class AwardInterface(ScrollArea):
 
         self.setWidget(self.view)
         self.setWidgetResizable(True)
-        self.setObjectName("my_course_interface")
+        self.setObjectName("award_interface")
 
         self.vBoxLayout.setSpacing(10)
         self.vBoxLayout.setContentsMargins(0, 0, 10, 30)
         self.vBoxLayout.addWidget(self.commandBar, 0, Qt.AlignmentFlag.AlignTop)
         self.vBoxLayout.addWidget(self.table, 0)
+
+        self.enableTransparentBackground()

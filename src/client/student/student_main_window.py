@@ -5,7 +5,7 @@ from src.client.student.home_interface import *
 from src.client.public.account_interface import AccountInterface
 from src.client.student.homework_interface import HomeworkInterface
 from src.client.student.mycourse_interface import *
-from src.client.student.selectcourse_interface import SelectCourseInterface
+from src.client.student.selectcourse_interface import *
 
 
 class StudentMainWindow(MSFluentWindow):
@@ -23,7 +23,7 @@ class StudentMainWindow(MSFluentWindow):
         self.awardInterface.setObjectName("awardInterface")
         self.accountInterface = AccountInterface(account.id, self)
         self.accountInterface.setObjectName("accountInterface")
-        self.homeworkInterface = HomeworkInterface(self)
+        self.homeworkInterface = HomeworkInterface(controller=self.controller, parent=self)
         self.homeworkInterface.setObjectName("homeworkInterface")
 
 

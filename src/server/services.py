@@ -65,7 +65,7 @@ def get_admins(page: int, size: int):
     cursor.close()
     return courses
 
-def get_award(sid):
+def get_award(sid, page: int, size: int):
     db = get_db()
     cursor = db.cursor(dictionary=True)
     sql = (
@@ -74,10 +74,17 @@ def get_award(sid):
         "FROM student, award "
         "WHERE student.sid = %s "
     )
+    # 先获取总数
     cursor.execute(sql, (sid, ))
+    num = cursor.fetchall()
+    # 获取总数
+    num = len(num)
+    # 获取
+    sql += f"limit %s offset %s"
+    cursor.execute(sql, (sid, size, page*size))
     awards = cursor.fetchall()
     cursor.close()
-    return awards
+    return awards, num
 
 #添加学生,应该由前端检查数据合法性
 def add_student(data: dict):
@@ -322,6 +329,7 @@ def get_my_course_info(sid , page: int, size: int, filters: dict):
 def get_course_info(page: int, size: int, sid: int):
     # 能选的课程是先修课及格的课程或者没有先修课的课程、而且是当前学期开的课程
     # 并且人数不超过上限
+    # 并且每一个时间段都不冲突
     db = get_db()
     cursor = db.cursor(dictionary=True)
     # 先获取当前学期，当前学期是已有的学期中最大的
@@ -332,7 +340,7 @@ def get_course_info(page: int, size: int, sid: int):
         "SELECT course.cid as course_id, course.course_name as course_name, department.dept_name as department_name, "
         "teacher.teacher_name as teacher_name, course.credit as course_credit, classroom.building_name as building_name, classroom.room_number as room_number, "
         "timeslot.day as course_day, timeslot.start_time as course_start_time, timeslot.end_time as course_end_time, "
-        "section.start_week as start_week, section.end_week as end_week "
+        "section.start_week as start_week, section.end_week as end_week, section.sec_id as sec_id "
         "FROM course "
         "JOIN section ON course.cid = section.cid "
         "JOIN timeslot_classroom_section ON section.sec_id = timeslot_classroom_section.sec_id "
@@ -372,22 +380,27 @@ def get_selected_course(sid):
 def get_homework(sid, page: int, size: int):
     db = get_db()
     cursor = db.cursor(dictionary=True)
+    # 找出当前学期
+    cursor.execute("SELECT max(semester_id) as semester_id FROM semester")
+    semester = cursor.fetchone()
     sql = (
         "SELECT course.cid as course_id, course.course_name as course_name, "
-        "homework.homework_name as homework_name, homework.content as homework_content, homework.deadline as deadline "
+        "homework.homework_name as homework_name, homework.content as homework_content, homework.deadline as homework_deadline,"
+        "section.sec_id as sec_id "
         "FROM course, section, homework, student_section "
         "WHERE student_section.sid = %s "
         "AND student_section.sec_id = section.sec_id "
         "AND course.cid = section.cid "
         "AND homework.sec_id = section.sec_id "
+        "AND section.semester_id = %s "
 
     )
     # 先获取总数
-    cursor.execute(sql, (sid, ))
+    cursor.execute(sql, (sid, semester['semester_id']))
     num = cursor.fetchall()
     # 分页
     sql += f"limit %s offset %s"
-    cursor.execute(sql, (sid, size, page*size))
+    cursor.execute(sql, (sid, semester['semester_id'], size, page*size))
     courses = cursor.fetchall()
     cursor.close()
     return courses, len(num)
@@ -491,23 +504,12 @@ def select_course(sid, sec_id):
 def submit_homework(sid, data: dict):
     db = get_db()
     cursor = db.cursor()
-    # 检查是否已经提交过，如果提交过则覆盖
-    cursor.execute(f"SELECT * FROM homework_collection WHERE sid = {sid} AND sec_id = {data['sec_id']} AND homework_name = '{data['homework_name']}'")
-    homework = cursor.fetchone()
-    # 获取当前时间
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    if homework:
-        cursor.execute(f"UPDATE homework_collection SET content = '{data['homework_content']}' WHERE sid = {sid} AND sec_id = {data['sec_id']} AND homework_name = '{data['homework_name']}'")
-        db.commit()
-        cursor.close()
-        return
-    # homework_collection
-    sql = {
-        "INSERT INTO homework_collection VALUES (%s, %s, %s, %s, %s)"
-    }
+    # 直接提交作业，注意分数是NULL
+    sql = (
+        "INSERT INTO homework_collection VALUES (%s, %s, %s, %s, %s, NULL)"
+    )
 
-    cursor.execute(sql, (sid, data['sec_id'], data['homework_name'], data['homework_content'], now))
-
+    cursor.execute(sql, (sid, data['sec_id'], data['homework_name'], datetime.now(), data['homework_content']))
     db.commit()
     cursor.close()
 
@@ -724,70 +726,44 @@ def set_grade(data: dict):
 
 # 添加课程：从已经存在的课程中选择，需要提交课程id，教师id，学期id
 # 前端传入的参数：课程id cid, 学期id semester_id， 想要选择的教室id classroom_id， 想要选择的时间段 time_slot_id  还有sec_id  最大人数
-def add_course(tid, data: dict):
+def add_course(tid, data: list):
     db = get_db()
     cursor = db.cursor()
 
-    try:
-        # 检查时间和教室是否冲突
-        semester_id = data['semester_id']
-        timeslot_id = data['timeslot_id']
-        classroom_id = data['classroom_id']
+    # 先把第一条插入section表，然后再插入timeslot_classroom_section表和teacher_section表
+    # 如果这个课程有多个时间段和教室，sec_id是一样的，只有timeslot_id和classroom_id不一样，只用插入到timeslot_classroom_section表
+    for i in range(len(data)):
+        if i == 0:
+            # 插入section表
+            cursor.execute("INSERT INTO section VALUES (%s, %s, %s, %s, %s, %s, %s)", (data[i]['sec_id'], data[i]['cid'], data[i]['start_week'], data[i]['end_week'], data[i]['max_number'], data[i]['semester_id'], data[i]['max_number'] ))
+            # 插入teacher_section表
+            cursor.execute("INSERT INTO teacher_section VALUES (%s, %s)", (tid, data[i]['sec_id']))
+        # 插入timeslot_classroom_section表
+        cursor.execute("INSERT INTO timeslot_classroom_section VALUES (%s, %s, %s)", (data[i]['sec_id'], data[i]['timeslot_id'], data[i]['classroom_id']))
 
-        sql0 = (
-            "SELECT section.sec_id "
-            "FROM section "
-            "JOIN timeslot_classroom_section ON section.sec_id = timeslot_classroom_section.sec_id "
-            "WHERE section.semester_id = %s AND timeslot_classroom_section.timeslot_id = %s AND timeslot_classroom_section.classroom_id = %s"
-        )
-        cursor.execute(sql0, (semester_id, timeslot_id, classroom_id))
-        timeslot_classroom_section = cursor.fetchone()
-        if timeslot_classroom_section:
-            raise myException('Time and classroom conflict.')
+    db.commit()
 
-        # 检查是否已经存在sec_id
-        sql1 = "SELECT sec_id FROM section WHERE sec_id = %s"
-        cursor.execute(sql1, (data['sec_id'],))
-        sec_id = cursor.fetchone()
 
-        if sec_id is None:
-            # 插入新的section
-            sql2 = (
-                "INSERT INTO section (sec_id, cid, start_week, end_week, max_students, semester_id, rest_number) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s)"
-            )
-            cursor.execute(sql2, (
-            data['sec_id'], data['cid'], data['start_week'], data['end_week'], data['max_number'], data['semester_id'],
-            data['max_number']))
+def check_course(tid, data: dict):
+    db = get_db()
+    cursor = db.cursor()
+    # 检查时间和教室是否冲突
+    # 如果冲突，返回False,否则返回True
+    semester_id = data['semester_id']
+    timeslot_id = data['timeslot_id']
+    classroom_id = data['classroom_id']
 
-            # 提交事务以使插入的sec_id可见
-            db.commit()
+    sql = (
+        "SELECT section.sec_id "
+        "FROM section "
+        "JOIN timeslot_classroom_section ON section.sec_id = timeslot_classroom_section.sec_id "
+        "WHERE section.semester_id = %s AND timeslot_classroom_section.timeslot_id = %s AND timeslot_classroom_section.classroom_id = %s"
+    )
+    cursor.execute(sql, (semester_id, timeslot_id, classroom_id))
 
-            # 插入新的teacher_section
-            sql3 = (
-                "INSERT INTO teacher_section (tid, sec_id) "
-                "VALUES (%s, %s)"
-            )
-            cursor.execute(sql3, (tid, data['sec_id']))
-
-        # 提交事务以使插入的teacher_section可见
-        db.commit()
-
-        # 插入timeslot_classroom_section
-        sql4 = (
-            "INSERT INTO timeslot_classroom_section (timeslot_id, classroom_id, sec_id) "
-            "VALUES (%s, %s, %s)"
-        )
-        cursor.execute(sql4, (timeslot_id, classroom_id, data['sec_id']))
-
-        # 提交事务
-        db.commit()
-    except Exception as e:
-        # 出现异常时回滚事务
-        db.rollback()
-        raise e
-    finally:
-        cursor.close()
+    if cursor.fetchone(): # 如果有冲突
+        return False
+    return True
 
 # 开一门新课
 def new_course(data:dict):

@@ -219,11 +219,11 @@ class StudentTableView(TableView):
             self.menu = RoundMenu()
             #self.l.setCurrentIndex(Q)
             # 逐个添加动作，Action 继承自 QAction，接受 FluentIconBase 类型的图标
-            self.copyAction = Action(FluentIcon.COPY, '复制', triggered=lambda: print("复制成功"))
+            # self.copyAction = Action(FluentIcon.COPY, '复制', triggered=lambda: print("复制成功"))
             # self.deleteAction = Action(FluentIcon.DELETE, '删除', triggered=lambda: print("删除成功"))
             self.passwordAction = Action(FluentIcon.EDIT,'修改密码',triggered= self.changePassword)
             self.infoAction = Action(FluentIcon.LABEL,'修改信息',triggered =self.changeInfo)
-            self.menu.addAction(self.copyAction)
+            # self.menu.addAction(self.copyAction)
             # self.menu.addAction(self.deleteAction)
             self.menu.addAction(self.passwordAction)
             self.menu.addAction(self.infoAction)
