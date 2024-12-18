@@ -47,8 +47,13 @@ class HomeworkTableView(TableView):
             self.model.setItem(i, 2, QStandardItem(row['homework_name']))
             self.model.setItem(i, 3, QStandardItem(row['homework_content']))
             self.model.setItem(i, 4, QStandardItem(str(row['homework_deadline'])))
+            # 根据作业内容是否为空判断是否提交过作业
+            if row['homework_content'] == '':
+                self.model.setItem(i, 5, QStandardItem('未提交'))
+            else:
+                self.model.setItem(i, 5, QStandardItem('已提交'))
 
-        self.model.setHorizontalHeaderLabels(['课程号', '课程名', '作业', '作业内容', '截止时间'])
+        self.model.setHorizontalHeaderLabels(['课程号', '课程名', '作业', '作业内容', '截止时间', '提交状态'])
         self.agentModel = QSortFilterProxyModel()
         self.agentModel.setSourceModel(self.model)
         self.agentModel.setFilterKeyColumn(-1)
