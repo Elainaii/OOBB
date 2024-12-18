@@ -243,7 +243,6 @@ class MyCourseInterface(ScrollArea):
         self.controller.set_my_course_filter(self.commandBar.filterMenu.get_semester(self.controller.account.curr_semester), self.commandBar.filterMenu.get_status(), '')
         self.controller.init_course_list()
         self.table.reset()
-        return
 
     def share(self):
         # 先获取数据

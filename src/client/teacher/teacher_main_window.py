@@ -7,6 +7,7 @@ from src.client.core.account import Account, TeacherController
 from src.client.public.account_interface import AccountInterface
 from src.client.teacher.my_course_interface import MyCourseInterface
 from src.client.teacher.add_course_interface import AddCourseInterface
+from src.client.public.ai_interface import AiInterface
 
 
 class TeacherMainWindow(MSFluentWindow):
@@ -15,8 +16,11 @@ class TeacherMainWindow(MSFluentWindow):
 
         self.account = account
         self.controller = TeacherController(account)
-        self.accountInterface = AccountInterface(self)
+        self.accountInterface = AccountInterface(account.id,self)
         self.accountInterface.setObjectName("accountInterface")
+
+        self.aiInterface = AiInterface(self)
+        self.aiInterface.setObjectName("aiInterface")
 
         # add sub interfaces
         self.myCourseInterface = MyCourseInterface(self.controller)
@@ -33,6 +37,7 @@ class TeacherMainWindow(MSFluentWindow):
 
         self.addSubInterface(self.myCourseInterface, FluentIcon.LIBRARY, "我的课程", FluentIcon.LIBRARY_FILL, isTransparent=True)
         self.addSubInterface(self.addCourseInterface, FluentIcon.ADD, "添加课程", FluentIcon.ADD_TO, isTransparent=True)
+        self.addSubInterface(self.aiInterface, FluentIcon.ROBOT, "智能助手", FluentIcon.ROBOT, isTransparent=True, position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.accountInterface, FluentIcon.PEOPLE, "账户", FluentIcon.PEOPLE, isTransparent=True, position=NavigationItemPosition.BOTTOM)
         self.titleBar.raise_()
 

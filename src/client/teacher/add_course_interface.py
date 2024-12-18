@@ -12,7 +12,7 @@ from qfluentwidgets import (ScrollArea, MSFluentWindow, FluentIcon, NavigationIt
                             SubtitleLabel, DatePicker,
                             ComboBox, CheckBox, RadioButton, InfoBar, InfoBarPosition, BreadcrumbBar, HeaderCardWidget,
                             GroupHeaderCardWidget, PushButton, IconWidget, InfoBarIcon, PrimaryPushButton, BodyLabel,
-                            PrimaryPushSettingCard)
+                            PrimaryPushSettingCard, SpinBox)
 
 from src.client.core.account import TeacherController
 
@@ -44,7 +44,7 @@ class AddCourseInfoCard(GroupHeaderCardWidget):
         self.setTitle("课程信息")
         self.controller = controller
         self.setBorderRadius(8)
-        self.setFixedHeight(250)
+        self.setFixedHeight(300)
         # data = controller.home_info
         # 将数据填充到组件中
         # 平均分 = data['avg_score']
@@ -52,11 +52,18 @@ class AddCourseInfoCard(GroupHeaderCardWidget):
         self.courseIdLabel = BodyLabel(f"课程ID：", self)
         self.creditLabel = BodyLabel(f"学分：", self)
         self.semesterLabel = BodyLabel(f"开课学期：", self)
+        self.limitLineEdit = SpinBox()
+        self.limitLineEdit.setRange(10, 3000)
+        self.secIdLineEdit = LineEdit()
+        self.secIdLineEdit.setPlaceholderText("请输入课程号")
+
 
         # 添加组件到分组中
         self.addGroup(FluentIcon.DICTIONARY,"课程ID","",self.courseIdLabel)
         self.addGroup(FluentIcon.CERTIFICATE,"学分","",self.creditLabel)
         self.addGroup(FluentIcon.CERTIFICATE,"开课学期","",self.semesterLabel)
+        self.addGroup(FluentIcon.CERTIFICATE,"容纳人数","",self.limitLineEdit)
+        self.addGroup(FluentIcon.CERTIFICATE,"课程号","",self.secIdLineEdit)
 
     def updateInfo(self):
         courseId = self.controller.curr_add_course_id
@@ -77,6 +84,11 @@ class AddClassTimeMessageBox(MessageBoxBase):
         self.titleLabel = SubtitleLabel('添加教室-时间信息')
         self.timeComboBox = ComboBox()
         self.classroomComboBox = ComboBox()
+        self.hintLabel = BodyLabel("请输入开始周数和结束周数")
+        self.beginWeekLineEdit = SpinBox()
+        self.beginWeekLineEdit.setRange(1, 20)
+        self.endWeekLineEdit = SpinBox()
+        self.endWeekLineEdit.setRange(1, 20)
 
         for time in controller.time_slot_list:
             self.timeComboBox.addItem( '周' + str(time['day']) + ' ' + str(time['start_time']) + '-' + str(time['end_time']))
@@ -87,6 +99,9 @@ class AddClassTimeMessageBox(MessageBoxBase):
         self.viewLayout.addWidget(self.titleLabel)
         self.viewLayout.addWidget(self.timeComboBox)
         self.viewLayout.addWidget(self.classroomComboBox)
+        self.viewLayout.addWidget(self.hintLabel)
+        self.viewLayout.addWidget(self.beginWeekLineEdit)
+        self.viewLayout.addWidget(self.endWeekLineEdit)
 
         self.widget.setMinimumWidth(350)
 
@@ -108,7 +123,7 @@ class AddCourseTableCard(GroupHeaderCardWidget):
 
 
 
-        self.model.setHorizontalHeaderLabels(['时间', '教室'])
+        self.model.setHorizontalHeaderLabels(['时间', '教室','开始周数','结束周数'])
         self.table.verticalHeader().hide()
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -171,7 +186,7 @@ class AddCourseCommandBar(CommandBar):
         self.pageEdit.setText('0')
         self.pageEdit.setFixedWidth(50)  # 连接时要设置宽度
         self.pageLabel2 = CaptionLabel()
-        self.pageLabel2.setText("页,共??页")
+        self.pageLabel2.setText(f"页,共{self.controller.all_course_total_page}页")
 
         self.addWidget(self.pageLabel1)
         self.addWidget(self.pageEdit)
@@ -291,6 +306,11 @@ class AddCourseInterface(ScrollArea):
         self.addCourseTableCard.addButton.clicked.connect(self.open_add_course_time_box)
         self.addCourseTableCard.delAction.triggered.connect(self.del_course_time)
         self.commandBar.add.triggered.connect(self.create_new_course)
+        self.commandBar.up.triggered.connect(self.course_list_prev_page)
+        self.commandBar.down.triggered.connect(self.course_list_next_page)
+        self.commandBar.pageEdit.textEdited.connect(self.course_list_change_page)
+
+        self.commandBar.pageLabel2.setText(f"页,共{self.controller.all_course_total_page}页")
 
         self.stack = QStackedWidget(self)
 
@@ -325,18 +345,23 @@ class AddCourseInterface(ScrollArea):
         self.breadcrumbBar.addItem(self.add.objectName(), "填写课程信息")
         self.controller.curr_add_course_id =  self.controller.all_course_list[self.table.currentIndex().row()]['cid']
         self.addCourseInfoCard.updateInfo()
+        self.submit.clicked.connect(self.submit_section)
 
     def open_add_course_time_box(self):
         self.messageBox = AddClassTimeMessageBox(self.controller,self.parent())
         if self.messageBox.exec():
-            time_slot_id = self.controller.time_slot_list[self.messageBox.timeComboBox.currentIndex()]['timeslot_id'] -1
-            classroom_id = self.controller.classroom_list[self.messageBox.classroomComboBox.currentIndex()]['classroom_id'] -1
-            self.add_course_time(time_slot_id,classroom_id)
+            time_slot_id = self.controller.time_slot_list[self.messageBox.timeComboBox.currentIndex()]['timeslot_id']
+            classroom_id = self.controller.classroom_list[self.messageBox.classroomComboBox.currentIndex()]['classroom_id']
+            begin_week = self.messageBox.beginWeekLineEdit.value()
+            end_week = self.messageBox.endWeekLineEdit.value()
+            self.add_course_time(time_slot_id,classroom_id,begin_week,end_week)
 
     def del_course_time(self):
         time_slot_id = self.controller.time_classroom_list[self.addCourseTableCard.table.currentIndex().row()]['time_slot_id']
         classroom_id = self.controller.time_classroom_list[self.addCourseTableCard.table.currentIndex().row()]['classroom_id']
-        status,msg = self.controller.del_course_time_list(time_slot_id,classroom_id)
+        begin_week = self.messageBox.beginWeekLineEdit.value()
+        end_week = self.messageBox.endWeekLineEdit.value()
+        status,msg = self.controller.del_course_time_list(time_slot_id,classroom_id,begin_week,end_week)
         if not status:
             InfoBar.error(
                 title='错误',
@@ -359,8 +384,8 @@ class AddCourseInterface(ScrollArea):
         )
         self.addCourseTableCard.model.removeRow(self.addCourseTableCard.table.currentIndex().row())
 
-    def add_course_time(self,time_slot_id,classroom_id):
-        status,msg = self.controller.add_course_time_list(time_slot_id,classroom_id)
+    def add_course_time(self,time_slot_id,classroom_id,begin_week,end_week):
+        status,msg = self.controller.add_course_time_list(time_slot_id,classroom_id,begin_week,end_week)
         if not status:
             InfoBar.error(
                 title='错误',
@@ -383,20 +408,25 @@ class AddCourseInterface(ScrollArea):
         )
         self.addCourseTableCard.model.appendRow([
             QStandardItem('周' +
-                          str(self.controller.time_slot_list[time_slot_id]['day']) +
+                          str(self.controller.time_slot_list[time_slot_id-1]['day']) +
                           ' ' +
-                          str(self.controller.time_slot_list[time_slot_id]['start_time']) +
+                          str(self.controller.time_slot_list[time_slot_id-1]['start_time']) +
                           '-' +
-                          str(self.controller.time_slot_list[time_slot_id]['end_time']))
+                          str(self.controller.time_slot_list[time_slot_id-1]['end_time']))
             ,
-            QStandardItem(self.controller.classroom_list[classroom_id]['building_name'] +
+            QStandardItem(self.controller.classroom_list[classroom_id-1]['building_name'] +
                           ' ' +
-                          str(self.controller.classroom_list[classroom_id]['room_number']))
+                          str(self.controller.classroom_list[classroom_id-1]['room_number']))
+            ,QStandardItem(str(begin_week)),QStandardItem(str(end_week))
         ])
         #self.addCourseTableCard.table.resizeColumnsToContents()
 
-    def submit_course(self):
-        status,msg = self.controller.submit_course()
+    def submit_section(self):
+        limit = self.addCourseInfoCard.limitLineEdit.value()
+        sec_id = self.addCourseInfoCard.secIdLineEdit.text()
+
+
+        status,msg = self.controller.submit_section(limit,sec_id)
         if not status:
             InfoBar.error(
                 title='错误',
@@ -454,6 +484,57 @@ class AddCourseInterface(ScrollArea):
             self.controller.get_all_course_list()
             self.table.reset()
             break
+
+    def course_list_next_page(self):
+        status,msg = self.controller.course_list_next_page()
+        if not status:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.parent()
+            )
+            return
+        self.table.reset()
+        self.commandBar.pageEdit.setText(str(self.controller.all_course_curr_page))
+
+    def course_list_prev_page(self):
+        status,msg = self.controller.course_list_prev_page()
+        if not status:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.parent()
+            )
+            return
+        self.table.reset()
+        self.commandBar.pageEdit.setText(str(self.controller.all_course_curr_page))
+
+    def course_list_change_page(self):
+        text = self.commandBar.pageEdit.text()
+        if text =='':
+            return
+        status,msg = self.controller.course_list_change_page(int(text))
+        if not status:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.parent()
+            )
+            return
+        self.table.reset()
+        self.commandBar.pageEdit.setText(str(self.controller.all_course_curr_page))
 
 
     def switchInterface(self, objectName):
