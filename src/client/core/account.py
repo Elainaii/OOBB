@@ -133,18 +133,20 @@ class StudentController():
 
             if r.json()['code'] == 0:
                 self.course_list = r.json()['data']
+                self.course_total_size = r.json()['total_num']
+                self.course_total_page = self.course_total_size // self.page_size + 1
                 return True,"Get course list success."
             else:
                 return False,r.json()['message']
 
-    def course_next_page(self):
+    def mycourse_next_page(self):
         if self.course_curr_page + 1 < self.course_total_page:
             self.course_curr_page += 1
             return self.init_course_list(self.course_curr_page)
         else:
             return False,"已经是最后一页了"
 
-    def course_prev_page(self):
+    def mycourse_prev_page(self):
         if self.course_curr_page - 1 >= 0:
             self.course_curr_page -= 1
             return self.init_course_list(self.course_curr_page)
@@ -212,8 +214,10 @@ class StudentController():
                 r = requests.get(Config.API_BASE_URL + f"/student/{self.account.id}/courses/homework?size=12&page=0", timeout=2)
                 r.raise_for_status()
             except requests.exceptions.Timeout:
+                print("连接超时")
                 return False,"连接超时"
             except requests.exceptions.RequestException as e:
+                print(e)
                 return False,f"An error occurred: {e}"
 
             if r.json()['code'] == 0:

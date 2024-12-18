@@ -35,7 +35,7 @@ class SelectCourseTableView(TableView):
     def __init__(self,controller:StudentController,parent = None):
         super().__init__(parent)
         self.controller = controller
-        self.filter_menu = SelectCourseFilterMenu('过滤',FluentIcon.FILTER,controller)
+        #self.filter_menu = SelectCourseFilterMenu('过滤',FluentIcon.FILTER,controller)
 
         controller.init_select_course()
         self.data = controller.select_course_list
@@ -117,45 +117,7 @@ class SelectCourseTableView(TableView):
                     parent=self.parent()
                 )
 
-class SelectCourseFilterMenu(TransparentDropDownPushButton):
-    def __init__(self,text,Icon, controller:StudentController):
-        super().__init__()
-        self.setText(text)
-        self.setIcon(Icon)
-        setFont(self, 12)
-        menu = RoundMenu(parent=self)
-        #开课单位，
-        self.submenu1 = CheckableMenu('课程状态', indicatorType=MenuIndicatorType.RADIO)
 
-        self.action1 = Action(FluentIcon.ACCEPT, "已通过课程", checkable=True)
-        self.action2 = Action(FluentIcon.CLOSE, "未通过课程", checkable=True)
-        self.action3 = Action(FluentIcon.ALIGNMENT, "全部课程", checkable=True)
-        self.action3.setChecked(True)
-        self.action4 = Action(FluentIcon.REMOVE, "正在进行课程", checkable=True)
-        self.actiongroup1 = QActionGroup(self.submenu1)
-        self.actiongroup1.addAction(self.action1)
-        self.actiongroup1.addAction(self.action2)
-        self.actiongroup1.addAction(self.action3)
-        self.actiongroup1.addAction(self.action4)
-        self.submenu1.addActions([self.action1, self.action2, self.action3, self.action4])
-        self.submenu1.setIcon(FluentIcon.CALENDAR)
-
-        # 这里请求学期列表，
-        self.submenu2 = CheckableMenu('学期', indicatorType=MenuIndicatorType.RADIO)
-        self.actionList = []
-        self.actiongroup2 = QActionGroup(self.submenu2)
-        for i,semester in enumerate(controller.account.semester_list):
-            self.actionList.append(Action(FluentIcon.CALENDAR, str(semester['year']) + str(semester['season']),checkable=True))
-            self.submenu2.addAction(self.actionList[i])
-            self.actiongroup2.addAction(self.actionList[i])
-            if(i == 19):
-                break
-        self.actionList[0].setChecked(True)
-
-
-        menu.addMenu(self.submenu1)
-        menu.addMenu(self.submenu2)
-        self.setMenu(menu)
 
 class SelectCourseCommandBar(CommandBar):
     def __init__(self,controller:StudentController,parent = None):
@@ -184,8 +146,8 @@ class SelectCourseCommandBar(CommandBar):
         self.addWidget(self.pageLabel2)
         self.addSeparator()
 
-        self.filterMenu = SelectCourseFilterMenu('过滤',FluentIcon.FILTER,controller)
-        self.addWidget(self.filterMenu)
+        #self.filterMenu = SelectCourseFilterMenu('过滤',FluentIcon.FILTER,controller)
+        #self.addWidget(self.filterMenu)
 
         # self.addSeparator()
         self.search = SearchLineEdit(self)

@@ -47,8 +47,15 @@ class HomeworkTableView(TableView):
             self.model.setItem(i, 2, QStandardItem(row['homework_name']))
             self.model.setItem(i, 3, QStandardItem(row['homework_content']))
             self.model.setItem(i, 4, QStandardItem(str(row['homework_deadline'])))
+            # 根据homework_content是否为空判断是否已经提交作业
+            # 并添加一行数据
+            if row['homework_content'] == '':
+                self.model.setItem(i, 5, QStandardItem('未提交'))
+            else:
+                self.model.setItem(i, 5, QStandardItem('已提交'))
 
-        self.model.setHorizontalHeaderLabels(['课程号', '课程名', '作业', '作业内容', '截止时间'])
+
+        self.model.setHorizontalHeaderLabels(['课程号', '课程名', '作业', '作业内容', '截止时间', '提交状态'])
         self.agentModel = QSortFilterProxyModel()
         self.agentModel.setSourceModel(self.model)
         self.agentModel.setFilterKeyColumn(-1)
@@ -177,18 +184,6 @@ class HomeworkInterface(ScrollArea):
 
         self.commandBar = HomeworkCommandBar(self.controller,self.view)
         self.table = HomeworkTableView(self.controller,self)
-        '''
-        self.commandBar.refresh.triggered.connect(self.refresh)
-        self.commandBar.share.triggered.connect(self.share)
-        # 筛选完毕后直接刷新
-        self.commandBar.filterMenu.action1.triggered.connect(self.refresh)
-        self.commandBar.filterMenu.action2.triggered.connect(self.refresh)
-        self.commandBar.filterMenu.action3.triggered.connect(self.refresh)
-        self.commandBar.filterMenu.action4.triggered.connect(self.refresh)
-        # 筛选学期后直接刷新
-        for action in self.commandBar.filterMenu.actionList:
-            action.triggered.connect(self.refresh)
-'''
         self.setWidget(self.view)
         self.setWidgetResizable(True)
         self.setObjectName("homework_interface")
@@ -198,14 +193,3 @@ class HomeworkInterface(ScrollArea):
         self.vBoxLayout.addWidget(self.commandBar,0, Qt.AlignmentFlag.AlignTop)
         self.vBoxLayout.addWidget(self.table, 0)
         self.enableTransparentBackground()
-'''
-    def refresh(self):
-        print(self.commandBar.filterMenu.get_semester(self.controller.account.curr_semester))
-        self.controller.set_my_course_filter(self.commandBar.filterMenu.get_semester(self.controller.account.curr_semester), self.commandBar.filterMenu.get_status(), '')
-        self.controller.init_course_list()
-        self.table.reset()
-
-    def share(self):
-        pass
-
-'''
