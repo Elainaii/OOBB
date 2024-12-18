@@ -1,3 +1,5 @@
+import os
+
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget,QApplication
 from PySide6.QtCore import Qt
@@ -8,6 +10,7 @@ from src.client.public.account_interface import AccountInterface
 from src.client.teacher.my_course_interface import MyCourseInterface
 from src.client.teacher.add_course_interface import AddCourseInterface
 from src.client.public.ai_interface import AiInterface
+from src.client.teacher.home_interface import HomeInterface
 
 
 class TeacherMainWindow(MSFluentWindow):
@@ -19,10 +22,12 @@ class TeacherMainWindow(MSFluentWindow):
         self.accountInterface = AccountInterface(account.id,self)
         self.accountInterface.setObjectName("accountInterface")
 
-        self.aiInterface = AiInterface(self)
+        self.aiInterface = AiInterface(account,self)
         self.aiInterface.setObjectName("aiInterface")
 
         # add sub interfaces
+        self.homeInterface = HomeInterface(self.controller)
+        self.homeInterface.setObjectName("homeInterface")
         self.myCourseInterface = MyCourseInterface(self.controller)
         self.myCourseInterface.setObjectName("myCourseInterface")
         self.addCourseInterface = AddCourseInterface(self.controller)
@@ -30,11 +35,16 @@ class TeacherMainWindow(MSFluentWindow):
 
 
 
+
         setThemeColor('#f18cb9', lazy=True)
         self.setFixedSize(960, 640)
         self.setWindowTitle('Teacher')
-        self.setWindowIcon(QIcon(':/qfluentwidgets/images/logo.png'))
 
+        script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        logo = script_dir + '/resource/images/logo2.png'
+        self.setWindowIcon(QIcon(logo))
+
+        self.addSubInterface(self.homeInterface, FluentIcon.HOME, "主页", FluentIcon.HOME_FILL, isTransparent=True)
         self.addSubInterface(self.myCourseInterface, FluentIcon.LIBRARY, "我的课程", FluentIcon.LIBRARY_FILL, isTransparent=True)
         self.addSubInterface(self.addCourseInterface, FluentIcon.ADD, "添加课程", FluentIcon.ADD_TO, isTransparent=True)
         self.addSubInterface(self.aiInterface, FluentIcon.ROBOT, "智能助手", FluentIcon.ROBOT, isTransparent=True, position=NavigationItemPosition.BOTTOM)

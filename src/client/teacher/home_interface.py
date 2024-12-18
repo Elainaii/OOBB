@@ -10,7 +10,7 @@ from src.client.core.account import *
 
 class InfoCard(GroupHeaderCardWidget):
 
-    def __init__(self, controller:StudentController, parent=None):
+    def __init__(self, controller:TeacherController, parent=None):
         super().__init__(parent)
         self.setTitle("个人信息")
         self.setBorderRadius(8)
@@ -19,14 +19,17 @@ class InfoCard(GroupHeaderCardWidget):
         # data = controller.home_info
         # 将数据填充到组件中
         # 平均分 = data['avg_score']
-        self.avgScoreLabel = BodyLabel(f"平均分数：{data['avg_score']}", self)
-        self.totalCreditLabel = BodyLabel(f"总学分：{data['total_credit']}", self)
-        self.totalCourseLabel = BodyLabel(f"总课程数目：{data['count_course']}", self)
+        self.nameLabel = BodyLabel(f"姓名：{data[0]['teacher_name']}", self)
+        self.idLabel = BodyLabel(f"工号：{data[0]['teacher_id']}", self)
+        self.departmentLabel = BodyLabel(f"部门：{data[0]['department_name']}", self)
+        self.totalCourseLabel = BodyLabel(f"总课程数目：{data[0]['count_course']}", self)
+
 
         # 添加组件到分组中
-        self.addGroup(FluentIcon.DICTIONARY,"平均分数","你的平均分数",self.avgScoreLabel)
-        self.addGroup(FluentIcon.CERTIFICATE,"学分","你的总学分",self.totalCreditLabel)
-        self.addGroup(FluentIcon.CERTIFICATE,"课程","你的总课程数目",self.totalCourseLabel)
+        self.addGroup(FluentIcon.DICTIONARY,"姓名","",self.nameLabel)
+        self.addGroup(FluentIcon.DICTIONARY,"工号","",self.idLabel)
+        self.addGroup(FluentIcon.DICTIONARY,"部门","",self.departmentLabel)
+        self.addGroup(FluentIcon.DICTIONARY,"总课程数目","",self.totalCourseLabel)
 
 
 class BannerWidget(QWidget):
@@ -35,8 +38,8 @@ class BannerWidget(QWidget):
         self.setFixedHeight(320)
 
         self.vBoxLayout = QVBoxLayout(self)
-        self.galleryLabel = BodyLabel(f'学生账号 \nStudent Course', self)
-        self.galleryLabel.setStyleSheet("color: white;font-size: 30px; font-weight: 600;")
+        #self.galleryLabel = BodyLabel(f'学生账号 \nStudent Course', self)
+        #self.galleryLabel.setStyleSheet("color: white;font-size: 30px; font-weight: 600;")
 
         # 创建阴影效果
         shadow = QGraphicsDropShadowEffect()
@@ -45,7 +48,7 @@ class BannerWidget(QWidget):
         shadow.setOffset(1.4, 1.4)     # 阴影偏移量
 
         # 将阴影效果应用于小部件
-        self.galleryLabel.setGraphicsEffect(shadow)
+        #self.galleryLabel.setGraphicsEffect(shadow)
         script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.img = Image.open(script_dir+'/resource/images/Elaina.png')
         self.banner = None
@@ -53,12 +56,12 @@ class BannerWidget(QWidget):
 
 
 
-        self.galleryLabel.setObjectName('galleryLabel')
+        #self.galleryLabel.setObjectName('galleryLabel')
 
         # Create a horizontal layout for the linkCardView with bottom alignment and margin
         self.vBoxLayout.setSpacing(0)
         self.vBoxLayout.setContentsMargins(20, 20, 0, 0)
-        self.vBoxLayout.addWidget(self.galleryLabel)
+        #self.vBoxLayout.addWidget(self.galleryLabel)
 
         self.vBoxLayout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
 
@@ -108,11 +111,3 @@ class HomeInterface(ScrollArea):
         self.vBoxLayout.addWidget(self.infoCard)
         self.vBoxLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-if __name__ == '__main__':
-    import sys
-    from PySide6.QtWidgets import QApplication
-
-    app = QApplication(sys.argv)
-    demo = HomeInterface()
-    demo.show()
-    sys.exit(app.exec())

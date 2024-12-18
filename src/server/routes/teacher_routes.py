@@ -210,4 +210,4 @@ def delete_student(section_id, sid):
 @teacher_bp.route('/teacher/<int:tid>/info', methods=['GET'])
 def get_teacher_info(tid):
     data = services.get_teacher_info(tid)
-    return create_response(data, message='success', code=0)
+    return jsonify({'code': 0, 'message': 'success','data':data})

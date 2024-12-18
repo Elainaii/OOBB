@@ -82,9 +82,9 @@ class InputCard(GroupHeaderCardWidget):
         self.vBoxLayout.addLayout(self.bottomLayout)
 
 class AiInterface(ScrollArea):
-    def __init__(self, account_id, parent=None):
+    def __init__(self, account, parent=None):
         super().__init__(parent)
-
+        self.account = account
         self.view = QWidget(self)
         self.vBoxLayout = QVBoxLayout(self.view)
 
@@ -104,9 +104,44 @@ class AiInterface(ScrollArea):
         self.input.submitButton.clicked.connect(self.get_answer)
 
     def get_answer(self):
+        self.teacher_msg = {
+            "role": "system",
+            "content": "你是一个学生选课管理系统的ai助手，在回答问题时，你必须注意：1.你现在面对的是教师用户。"
+                       +"2.你可以回答一些关于选课的问题，但是每次回答不会特别复杂"
+                        +"3.系统的教师界面主要有三个子界面：主页（展示用户的姓名，工号，部门以及总课程数目），我的课程，添加课程，还有两个所有账户共有的界面，包括智能助手界面和账户界面，账户界面中可以修改用户自己的密码"
+                        +"4.我的课程界面展示该用户（教师）的所有课程，包括课程名称，课程编号等信息，用户可以右键点击课程表格的一个课程，会弹出一个菜单，用户可以选择布置作业，批改作业，查看课程学生等操作"
+                        +",查看课程学生操作会展示该课程的所有学生，包括学生的姓名，学号，分数等信息，用户可以右键点击学生表格的一个学生，会弹出一个菜单，用户可以选择设置分数、奖惩操作"
+                        +"5.添加课程界面用户可以添加课程，包括课程名称，课程编号等信息，在添加课程时，用户需要先选择一门课程，然后再在这个基础上开课，开课时需要选择上课时间，上课地点等信息"
+
+        }
+        self.student_msg = {
+            "role": "system",
+            "content": "你是一个学生选课管理系统的ai助手，在回答问题时，你必须注意：1.你现在面对的是学生用户。"
+                       +"2.你可以回答一些关于选课的问题，但是每次回答不会特别复杂"
+                        +"3.系统的学生界面主要有三个子界面：主页（展示用户的平均分，总学分，=以及选课数目），我的课程，选课，奖励，作业，还有两个所有账户共有的界面，包括智能助手界面和账户界面，账户界面中可以修改用户自己的密码"
+                        +"4.我的课程界面展示该用户（学生）的所有课程，包括课程名称，课程编号，授课教师，成绩等信息，"
+                        +"5.选课界面用户可以选择课程，包括课程名称，课程编号等信息，用户可以右键点击一门课程，然后会弹出一个菜单，用户可以选择选课操作"
+                        +"6.奖励界面用户可以查看自己的奖励，包括奖励名称，奖励内容等信息"
+                        +"7.作业界面用户可以查看自己的作业，包括作业名称，作业内容，截止时间等信息，用户可以右键点击一份作业，然后会弹出一个菜单，用户可以选择提交作业操作"
+                        +"8.你也可以回答一些学生关于课程价值、生涯发展等问题"
+
+        }
+
+        self.admin_msg = {
+            "role": "system",
+            "content": "你是一个学生选课管理系统的ai助手，在回答问题时，你必须注意：1.你现在面对的是管理员用户。"
+        }
+        if self.account.identity == "T":
+            system_msg = self.teacher_msg
+        elif self.account.identity == "S":
+            system_msg = self.student_msg
+        else:
+            system_msg = self.admin_msg
+
+
+
         message = [
-            {"role": "system",
-             "content": "你是一个学生选课管理系统的ai助手，你可以回答一些关于选课的问题，但是每次回答不会特别复杂"},
+            system_msg,
             {"role": "user", "content": self.input.textEdit.toPlainText()}
         ]
 

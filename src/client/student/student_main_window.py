@@ -26,7 +26,7 @@ class StudentMainWindow(MSFluentWindow):
         self.accountInterface.setObjectName("accountInterface")
         self.homeworkInterface = HomeworkInterface(controller=self.controller, parent=self)
         self.homeworkInterface.setObjectName("homeworkInterface")
-        self.AI = AiInterface(account.id, self)
+        self.AI = AiInterface(account, self)
         self.AI.setObjectName("AI")
 
 
@@ -43,7 +43,9 @@ class StudentMainWindow(MSFluentWindow):
         setThemeColor('#f18cb9', lazy=True)
         self.setFixedSize(960, 640)
         self.setWindowTitle('Student')
-        self.setWindowIcon(QIcon(':/qfluentwidgets/images/logo.png'))
+        script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        logo = script_dir + '/resource/images/logo2.png'
+        self.setWindowIcon(QIcon(logo))
 
         self.titleBar.raise_()
 

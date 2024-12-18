@@ -936,3 +936,13 @@ class TeacherController():
         else:
             return False,r.json()['message']
 
+    def init_home(self):
+        try:
+            r = requests.get(Config.API_BASE_URL + f"/teacher/{self.account.id}/info", timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+        self.home_info = r.json()['data']
+

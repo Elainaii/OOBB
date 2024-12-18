@@ -1,3 +1,5 @@
+import os
+
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget, QApplication
 from PySide6.QtCore import Qt
@@ -26,7 +28,7 @@ class AdminMainWindow(MSFluentWindow):
         self.accountInterface.setObjectName("accountInterface")
         self.otherInterface = OthersInterface(self.controller,self)
         self.otherInterface.setObjectName("otherInterface")
-        self.AI = AiInterface(account.id, self)
+        self.AI = AiInterface(account, self)
         self.AI.setObjectName("AI")
 
         self.addSubInterface(self.studentInterface, FluentIcon.PEOPLE, "学生", FluentIcon.PEOPLE, isTransparent=True)
@@ -39,7 +41,11 @@ class AdminMainWindow(MSFluentWindow):
         setThemeColor('#f18cb9', lazy=True)
         self.setFixedSize(960, 640)
         self.setWindowTitle('Admin')
-        self.setWindowIcon(QIcon(':/qfluentwidgets/images/logo.png'))
+
+        script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        logo = script_dir + '/resource/images/logo2.png'
+        self.setWindowIcon(QIcon(logo))
+
 
         self.titleBar.raise_()
 
