@@ -16,7 +16,14 @@ from qfluentwidgets import (ScrollArea, MSFluentWindow, FluentIcon, NavigationIt
 from src.client.core.account import *
 import pandas as pd
 
+class DropCourseBox(MessageBoxBase):
+    def __init__(self, controller:StudentController, parent = None):
+        super().__init__(parent)
+        self.controller = controller
+        self.titleLabel = SubtitleLabel('确认退课')
+        self.viewLayout.addWidget(self.titleLabel)
 
+        self.widget.setMinimumWidth(350)
 
 class MyCourseTableView(TableView):
     def __init__(self,controller:StudentController,parent = None):
@@ -40,7 +47,6 @@ class MyCourseTableView(TableView):
             self.model.setItem(i, 7, QStandardItem(str('周' + str(row['course_day']) +' '+ str(row['course_start_time']) + "-" + str(row['course_end_time']))))
             self.model.setItem(i, 8, QStandardItem(str(row['score'])))
 
-
         self.model.setHorizontalHeaderLabels(['课程号', '课程名', '上课地点', '教师', '开始周', '结束周', '学分', '上课时间', '成绩'])
         self.agentModel = QSortFilterProxyModel()
         self.agentModel.setSourceModel(self.model)
@@ -52,6 +58,8 @@ class MyCourseTableView(TableView):
         self.resizeColumnsToContents()
         self.setSortingEnabled(True)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.show_rightmenu)
 
     def reset(self):
         self.data = self.controller.course_list
@@ -68,6 +76,55 @@ class MyCourseTableView(TableView):
             self.model.setItem(i, 7, QStandardItem(str('周' + str(row['course_day']) +' '+ str(row['course_start_time']) + "-" + str(row['course_end_time']))))
             self.model.setItem(i, 8, QStandardItem(str(row['score'])))
         self.agentModel.setSourceModel(self.model)
+
+    def show_rightmenu(self, pos):
+        index = self.indexAt(pos)  # 返回点击的index
+        if index.isValid():  # 如果有index,则弹出菜单,并且高光选中的行
+            self.setCurrentIndex(index)
+            self.menu = RoundMenu()
+            # self.l.setCurrentIndex(Q)
+            # 逐个添加动作，Action 继承自 QAction，接受 FluentIconBase 类型的图标
+            # self.copyAction = Action(FluentIcon.COPY, '复制', triggered=lambda: print("复制成功"))
+            # self.deleteAction = Action(FluentIcon.DELETE, '删除', triggered=lambda: print("删除成功"))
+            self.drop_course_action = Action(FluentIcon.DELETE, '退课', triggered=self.drop_course)
+
+            # self.menu.addAction(self.copyAction)
+            # self.menu.addAction(self.deleteAction)
+            self.menu.addAction(self.drop_course_action)
+
+            self.menu.exec(QCursor.pos())
+
+    def drop_course(self):
+        self.drop_box = DropCourseBox(self.controller, self.parent())
+
+        if self.drop_box.exec() == 1:
+            data = {
+                'sec_id': self.data[self.currentIndex().row()]['sec_id']
+            }
+            status, msg = self.controller.drop_course(data)
+            if status:
+                self.controller.init_course_list()
+                self.reset()
+                InfoBar.success(
+                    title='成功',
+                    content='退课成功',
+                    orient=Qt.Vertical,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP_RIGHT,
+                    duration=3000,
+                    parent=self
+                )
+            else:
+                InfoBar.error(
+                    title='错误',
+                    content=msg,
+                    orient=Qt.Vertical,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP_RIGHT,
+                    duration=3000,
+                    parent=self
+                )
+        return
 
 class MyCourseFilterMenu(TransparentDropDownPushButton):
     def __init__(self,text,Icon,controller:StudentController):

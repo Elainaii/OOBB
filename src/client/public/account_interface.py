@@ -3,7 +3,7 @@ from PySide6.QtGui import QImage, QPainter, QPainterPath, QPixmap
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QGraphicsDropShadowEffect
 from PIL import Image
 from qfluentwidgets import FluentIcon, ScrollArea, BodyLabel, GroupHeaderCardWidget, ElevatedCardWidget, CaptionLabel, \
-    PasswordLineEdit, PrimaryPushButton, IconWidget, TitleLabel, SubtitleLabel, PushSettingCard, PrimaryPushSettingCard
+    PasswordLineEdit, PrimaryPushButton, IconWidget, TitleLabel, SubtitleLabel, PushSettingCard, PrimaryPushSettingCard, InfoBar, InfoBarPosition
 # from src.client.admin.admin_main_window import *
 
 class ChangePasswordCard(GroupHeaderCardWidget):
@@ -11,10 +11,10 @@ class ChangePasswordCard(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("修改密码")
         self.setBorderRadius(8)
-
+        self.controller = controller
         self.hintIcon = IconWidget(FluentIcon.INFO, self)
         # 设置ID:为当前用户的ID
-        self.idLabel = BodyLabel("ID")
+        self.idLabel = BodyLabel("ID: " + str(controller.account.id))
         self.passwordEdit1 = PasswordLineEdit()
         self.passwordEdit2 = PasswordLineEdit()
         self.hintLabel = BodyLabel("点击按钮更改密码 👉")
@@ -35,6 +35,42 @@ class ChangePasswordCard(GroupHeaderCardWidget):
         group.setSeparatorVisible(True)
         # 添加底部工具栏
         self.vBoxLayout.addLayout(self.bottomLayout)
+
+        self.submitButton.clicked.connect(self.change_password)
+
+    def change_password(self):
+        new_password1 = self.passwordEdit1.text()
+        new_password2 = self.passwordEdit2.text()
+        msg = "两次输入的密码不一致"
+        if new_password1 != new_password2:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=3000,
+                parent=self
+            )
+            return
+        # 设置新密码
+        data = {
+            'id': self.controller.account.id,
+            'old_password': self.controller.account.password,
+            'new_password': new_password1
+        }
+        self.controller.change_password(data)
+        msg = "密码修改成功"
+        InfoBar.success(
+            title='成功',
+            content=msg,
+            orient=Qt.Vertical,
+            isClosable=True,
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=3000,
+            parent=self
+        )
+
 
 
 class AccountInterface(ScrollArea):

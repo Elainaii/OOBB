@@ -50,9 +50,10 @@ class SelectCourseTableView(TableView):
             self.model.setItem(i, 5, QStandardItem(str(row['end_week'])))
             self.model.setItem(i, 6, QStandardItem(str(row['course_credit'])))
             self.model.setItem(i, 7, QStandardItem(str('周' + str(row['course_day']) +' '+ str(row['course_start_time']) + "-" + str(row['course_end_time']))))
+            self.model.setItem(i, 8, QStandardItem(str(row['rest_number'])))
 
 
-        self.model.setHorizontalHeaderLabels(['课程号', '课程名', '上课地点', '教师', '开始周', '结束周', '学分', '上课时间'])
+        self.model.setHorizontalHeaderLabels(['课程号', '课程名', '上课地点', '教师', '开始周', '结束周', '学分', '上课时间', '剩余名额'])
         self.agentModel = QSortFilterProxyModel()
         self.agentModel.setSourceModel(self.model)
         self.agentModel.setFilterKeyColumn(-1)
@@ -133,6 +134,7 @@ class SelectCourseTableView(TableView):
             self.model.setItem(i, 5, QStandardItem(str(row['end_week'])))
             self.model.setItem(i, 6, QStandardItem(str(row['course_credit'])))
             self.model.setItem(i, 7, QStandardItem(str('周' + str(row['course_day']) +' '+ str(row['course_start_time']) + "-" + str(row['course_end_time']))))
+            self.model.setItem(i, 8, QStandardItem(str(row['rest_number'])))
         self.resizeColumnsToContents()
 
 

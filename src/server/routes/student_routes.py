@@ -107,3 +107,10 @@ def select_course(sid):
 def get_student_info(sid):
     data = services.get_student_info(sid)
     return jsonify({'code': 0, 'message': 'success', 'data': data})
+
+# 退课
+@student_bp.route('/student/<int:sid>/courses/drop', methods=['POST'])
+def drop_course(sid):
+    data = request.json
+    services.drop_course(sid, data['sec_id'])
+    return jsonify({'code': 0, 'message': 'success'})
