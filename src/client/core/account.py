@@ -267,6 +267,20 @@ class StudentController():
         else:
             return False,r.json()['message']
 
+    def drop_course(self,data):
+        try:
+            r = requests.post(Config.API_BASE_URL + f"/student/{self.account.id}/courses/drop", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            return True,"Drop course success."
+        else:
+            return False,r.json()['message']
+
 class AdminController:
     def __init__(self, account: Account):
         self.account = account

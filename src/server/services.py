@@ -273,7 +273,7 @@ def get_my_course_info(sid , page: int, size: int, filters: dict):
         "timeslot.day as course_day, timeslot.start_time as course_start_time, timeslot.end_time as course_end_time, "
         "classroom.building_name as building_name, classroom.room_number as room_number, "
         "section.start_week as start_week, section.end_week as end_week, teacher.teacher_name as teacher_name,"
-        "student_section.score as score "
+        "student_section.score as score, section.rest_number as rest_number, section.sec_id as sec_id "
         "FROM course "
         "JOIN section ON course.cid = section.cid "
         "JOIN timeslot_classroom_section ON section.sec_id = timeslot_classroom_section.sec_id "
@@ -343,7 +343,7 @@ def get_course_info(page: int, size: int, sid: int):
         "SELECT course.cid as course_id, course.course_name as course_name, department.dept_name as department_name, "
         "teacher.teacher_name as teacher_name, course.credit as course_credit, classroom.building_name as building_name, classroom.room_number as room_number, "
         "timeslot.day as course_day, timeslot.start_time as course_start_time, timeslot.end_time as course_end_time, "
-        "section.start_week as start_week, section.end_week as end_week, section.sec_id as sec_id "
+        "section.start_week as start_week, section.end_week as end_week, section.sec_id as sec_id, section.rest_number as rest_number "
         "FROM course "
         "JOIN section ON course.cid = section.cid "
         "JOIN timeslot_classroom_section ON section.sec_id = timeslot_classroom_section.sec_id "
@@ -926,3 +926,14 @@ def get_teacher_info(tid):
     teachers = cursor.fetchall()
     cursor.close()
     return teachers
+
+# 退课，需要提交学生id，课程id
+def drop_course(sid, sec_id):
+    db = get_db()
+    cursor = db.cursor()
+    # 删除student_section
+    cursor.execute("DELETE FROM student_section WHERE sid = %s AND sec_id = %s", (sid, sec_id))
+    # 更新section
+    cursor.execute("UPDATE section SET rest_number = rest_number + 1 WHERE sec_id = %s", (sec_id,))
+    db.commit()
+    cursor.close()
