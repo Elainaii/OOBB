@@ -361,7 +361,7 @@ class MyCourseStudentTableView(TableView):
 
     def setReward(self):
         self.controller.curr_student_id = self.controller.student_list[self.currentIndex().row()]['student_id']
-        self.rewardMessageBox = SetRewardMessageBox(self.controller,self.parent)
+        self.rewardMessageBox = SetRewardMessageBox(self.controller,self.parent())
         self.rewardMessageBox.sidLineEdit.setText(str(self.controller.curr_student_id))
         while self.rewardMessageBox.exec():
             reward = self.rewardMessageBox.rewardLineEdit.text()
@@ -381,7 +381,7 @@ class MyCourseStudentTableView(TableView):
                         isClosable=True,
                         position=InfoBarPosition.TOP,
                         duration=3000,
-                        parent=self.parent
+                        parent=self.parent()
                     )
                     #self.controller.get_course_students()
                     #self.reset()

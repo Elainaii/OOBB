@@ -59,17 +59,30 @@ class ChangePasswordCard(GroupHeaderCardWidget):
             'old_password': self.controller.account.password,
             'new_password': new_password1
         }
-        self.controller.change_password(data)
-        msg = "密码修改成功"
-        InfoBar.success(
-            title='成功',
-            content=msg,
-            orient=Qt.Vertical,
-            isClosable=True,
-            position=InfoBarPosition.TOP_RIGHT,
-            duration=3000,
-            parent=self
-        )
+        status ,msg = self.controller.change_password(data)
+        if status:
+            InfoBar.success(
+                title='成功',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=3000,
+                parent=self
+            )
+        else:
+            InfoBar.error(
+                title='错误',
+                content=msg,
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=3000,
+                parent=self
+            )
+
+
+
 
 
 

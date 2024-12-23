@@ -63,7 +63,7 @@ class SelectCourseTableView(TableView):
         self.setModel(self.agentModel)
         self.verticalHeader().hide()
         self.resizeColumnsToContents()
-        self.setSortingEnabled(True)
+        self.setSortingEnabled(False)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_rightmenu)

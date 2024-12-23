@@ -535,7 +535,7 @@ class AdminController:
 
     def change_password(self,data):
         try:
-            r = requests.post(Config.API_BASE_URL + "/account/change_password", json=data, timeout=2)
+            r = requests.post(Config.API_BASE_URL + "/admin/account/change_password", json=data, timeout=2)
             r.raise_for_status()
         except requests.exceptions.Timeout:
             return False,"连接超时"
@@ -544,6 +544,35 @@ class AdminController:
 
         if r.json()['code'] == 0:
             return True,"Change password success."
+        else:
+            return False,r.json()['message']
+
+
+    def add_department(self,data):
+        try:
+            r = requests.post(Config.API_BASE_URL + "/admin/department/add", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            return True,"Add department success."
+        else:
+            return False,r.json()['message']
+
+    def change_department(self,data):
+        try:
+            r = requests.post(Config.API_BASE_URL + "/admin/department/change", json=data, timeout=2)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            return False,"连接超时"
+        except requests.exceptions.RequestException as e:
+            return False,f"An error occurred: {e}"
+
+        if r.json()['code'] == 0:
+            return True,"Change department success."
         else:
             return False,r.json()['message']
 
@@ -675,33 +704,6 @@ class TeacherController():
         else:
             return False,r.json()['message']
 
-    def add_department(self,data):
-        try:
-            r = requests.post(Config.API_BASE_URL + "/admin/department/add", json=data, timeout=2)
-            r.raise_for_status()
-        except requests.exceptions.Timeout:
-            return False,"连接超时"
-        except requests.exceptions.RequestException as e:
-            return False,f"An error occurred: {e}"
-
-        if r.json()['code'] == 0:
-            return True,"Add department success."
-        else:
-            return False,r.json()['message']
-
-    def change_department(self,data):
-        try:
-            r = requests.post(Config.API_BASE_URL + "/admin/department/change", json=data, timeout=2)
-            r.raise_for_status()
-        except requests.exceptions.Timeout:
-            return False,"连接超时"
-        except requests.exceptions.RequestException as e:
-            return False,f"An error occurred: {e}"
-
-        if r.json()['code'] == 0:
-            return True,"Change department success."
-        else:
-            return False,r.json()['message']
 
     def get_all_course_list(self):
         try:

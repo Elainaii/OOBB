@@ -30,10 +30,9 @@ def change_password():
     old_password = request.json.get('old_password')
     new_password = request.json.get('new_password')
     user = services.get_user(userid)
-    if user and user['password'] == old_password:
-        services.change_password(userid, new_password)
-        return jsonify({'code': 0, 'message': 'success'})
-    return jsonify({'code': -1, 'message': 'Invalid username or password.'})
+    services.change_password(userid, new_password)
+    return jsonify({'code': 0, 'message': 'success'})
+
 
 # 获取院系信息
 @public_bp.route('/departments', methods=['GET'])

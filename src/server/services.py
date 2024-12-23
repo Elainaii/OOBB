@@ -389,11 +389,11 @@ def get_homework(sid, page: int, size: int):
     sql = (
         "SELECT course.cid as course_id, course.course_name as course_name, "
         "homework.homework_name as homework_name, homework.content as homework_content, homework.deadline as homework_deadline,"
-        "section.sec_id as sec_id, homework_collection.content as homework_content, homework_collection.score as score "
+        "section.sec_id as sec_id, homework_collection.content as homework_collection_content, homework_collection.score as score "
         "FROM course "
         "JOIN section ON course.cid = section.cid "
         "JOIN homework ON section.sec_id = homework.sec_id "
-        "JOIN homework_collection ON homework.sec_id = homework_collection.sec_id AND homework_collection.sid = %s AND homework.homework_name = homework_collection.homework_name "
+        "LEFT JOIN homework_collection ON homework.sec_id = homework_collection.sec_id AND homework_collection.sid = %s AND homework.homework_name = homework_collection.homework_name "
         "WHERE section.semester_id = %s "
     )
     # 先获取总数
@@ -403,6 +403,7 @@ def get_homework(sid, page: int, size: int):
     sql += f"limit %s offset %s"
     cursor.execute(sql, (sid, semester['semester_id'], size, page*size))
     courses = cursor.fetchall()
+    print(courses)
     cursor.close()
     return courses, len(num)
 

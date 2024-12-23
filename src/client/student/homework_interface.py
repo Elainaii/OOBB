@@ -46,16 +46,17 @@ class HomeworkTableView(TableView):
             self.model.setItem(i, 1, QStandardItem(row['course_name']))
             self.model.setItem(i, 2, QStandardItem(row['homework_name']))
             self.model.setItem(i, 3, QStandardItem(row['homework_content']))
-            self.model.setItem(i, 4, QStandardItem(str(row['homework_deadline'])))
+            self.model.setItem(i, 4, QStandardItem(str(row['homework_collection_content'])))
+            self.model.setItem(i, 5, QStandardItem(str(row['homework_deadline'])))
             # 根据作业内容是否为空判断是否提交过作业
-            if row['homework_content'] == '':
-                self.model.setItem(i, 5, QStandardItem('未提交'))
+            if row['homework_collection_content'] is None:
+                self.model.setItem(i, 6, QStandardItem('未提交'))
             else:
-                self.model.setItem(i, 5, QStandardItem('已提交'))
+                self.model.setItem(i, 6, QStandardItem('已提交'))
             # 分数
-            self.model.setItem(i, 6, QStandardItem(str(row['score'])))
+            self.model.setItem(i, 7, QStandardItem(str(row['score'])))
 
-        self.model.setHorizontalHeaderLabels(['课程号', '课程名', '作业', '作业内容', '截止时间', '提交状态', '分数'])
+        self.model.setHorizontalHeaderLabels(['课程号', '课程名', '作业', '作业内容', '我的作业', '截止时间', '提交状态', '分数'])
         self.agentModel = QSortFilterProxyModel()
         self.agentModel.setSourceModel(self.model)
         self.agentModel.setFilterKeyColumn(-1)
@@ -64,7 +65,7 @@ class HomeworkTableView(TableView):
         self.setModel(self.agentModel)
         self.verticalHeader().hide()
         self.resizeColumnsToContents()
-        self.setSortingEnabled(True)
+        self.setSortingEnabled(False)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_rightmenu)
@@ -142,19 +143,20 @@ class HomeworkTableView(TableView):
             self.model.setItem(i, 1, QStandardItem(row['course_name']))
             self.model.setItem(i, 2, QStandardItem(row['homework_name']))
             self.model.setItem(i, 3, QStandardItem(row['homework_content']))
-            self.model.setItem(i, 4, QStandardItem(str(row['homework_deadline'])))
+            self.model.setItem(i, 4, QStandardItem(str(row['homework_collection_content'])))
+            self.model.setItem(i, 5, QStandardItem(str(row['homework_deadline'])))
             # 根据作业内容是否为空判断是否提交过作业
-            if row['homework_content'] == '':
-                self.model.setItem(i, 5, QStandardItem('未提交'))
+            if row['homework_collection_content'] is None:
+                self.model.setItem(i, 6, QStandardItem('未提交'))
             else:
-                self.model.setItem(i, 5, QStandardItem('已提交'))
+                self.model.setItem(i, 6, QStandardItem('已提交'))
             # 分数
-            self.model.setItem(i, 6, QStandardItem(str(row['score'])))
+            self.model.setItem(i, 7, QStandardItem(str(row['score'])))
 
-        self.model.setHorizontalHeaderLabels(['课程号', '课程名', '作业', '作业内容', '截止时间', '提交状态', '分数'])
+        self.model.setHorizontalHeaderLabels(['课程号', '课程名', '作业', '作业内容', '我的作业', '截止时间', '提交状态', '分数'])
         self.agentModel.setSourceModel(self.model)
         self.resizeColumnsToContents()
-        self.setSortingEnabled(True)
+        self.setSortingEnabled(False)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
 class HomeworkCommandBar(CommandBar):

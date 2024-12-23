@@ -56,7 +56,7 @@ class MyCourseTableView(TableView):
         self.setModel(self.agentModel)
         self.verticalHeader().hide()
         self.resizeColumnsToContents()
-        self.setSortingEnabled(True)
+        self.setSortingEnabled(False)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_rightmenu)
@@ -76,6 +76,7 @@ class MyCourseTableView(TableView):
             self.model.setItem(i, 7, QStandardItem(str('周' + str(row['course_day']) +' '+ str(row['course_start_time']) + "-" + str(row['course_end_time']))))
             self.model.setItem(i, 8, QStandardItem(str(row['score'])))
         self.agentModel.setSourceModel(self.model)
+        self.resizeColumnsToContents()
 
     def show_rightmenu(self, pos):
         index = self.indexAt(pos)  # 返回点击的index
